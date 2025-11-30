@@ -155,3 +155,86 @@ def login_user(request):
         return JsonResponse({"ok": True, "message": "Giriş başarılı"})
     except Player.DoesNotExist:
         return JsonResponse({"ok": False, "message": "Kullanıcı adı veya şifre hatalı"}, status=400)
+
+
+@csrf_exempt
+def get_profile(request):
+    """
+    GET /api/profile/?username=test
+    veya
+    POST /api/profile/
+    body: {"username": "test"}
+    """
+    username = None
+    
+    if request.method == "GET":
+        username = request.GET.get("username", "").strip()
+    elif request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            username = (data.get("username") or "").strip()
+        except json.JSONDecodeError:
+            return JsonResponse({"ok": False, "message": "Invalid JSON"}, status=400)
+    else:
+        return JsonResponse({"error": "GET or POST required"}, status=405)
+
+    if not username:
+        return JsonResponse({"ok": False, "message": "Kullanıcı adı gerekli"}, status=400)
+
+    try:
+        player = Player.objects.get(username=username)
+        
+        # Son 10 skoru al
+        recent_scores = list(
+            player.scores.order_by("-created_at")[:10].values(
+                "value", "created_at"
+            )
+        )
+        
+        # Tarihleri formatla
+        for score in recent_scores:
+            score["created_at"] = score["created_at"].isoformat(timespec="seconds")
+        
+        return JsonResponse({
+            "ok": True,
+            "profile": {
+                "username": player.username,
+                "avatar": player.avatar,
+                "highest_score": player.get_highest_score(),
+                "total_games": player.get_total_games(),
+                "average_score": player.get_average_score(),
+                "created_at": player.created_at.isoformat(timespec="seconds"),
+                "recent_scores": recent_scores,
+            }
+        })
+    except Player.DoesNotExist:
+        return JsonResponse({"ok": False, "message": "Kullanıcı bulunamadı"}, status=404)
+
+
+@csrf_exempt
+def update_avatar(request):
+    """
+    POST /api/profile/avatar/
+    body: {"username": "test", "avatar": "🐍"}
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "message": "Invalid JSON"}, status=400)
+
+    username = (data.get("username") or "").strip()
+    avatar = (data.get("avatar") or "🐍").strip()[:10]  # Max 10 karakter
+
+    if not username:
+        return JsonResponse({"ok": False, "message": "Kullanıcı adı gerekli"}, status=400)
+
+    try:
+        player = Player.objects.get(username=username)
+        player.avatar = avatar
+        player.save()
+        return JsonResponse({"ok": True, "message": "Avatar güncellendi", "avatar": avatar})
+    except Player.DoesNotExist:
+        return JsonResponse({"ok": False, "message": "Kullanıcı bulunamadı"}, status=404)

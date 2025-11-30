@@ -9,4 +9,6 @@ urlpatterns = [
     path("api/score/top/", views.top_scores, name="top_scores"),
     path("api/auth/register/", views.register_user, name="register_user"),
     path("api/auth/login/", views.login_user, name="login_user"),
+    path("api/profile/", views.get_profile, name="get_profile"),
+    path("api/profile/avatar/", views.update_avatar, name="update_avatar"),
 ]

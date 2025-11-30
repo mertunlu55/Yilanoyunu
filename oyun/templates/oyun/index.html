@@ -375,7 +375,7 @@
         }
 
         /* Login/Kayıt/Menü Ekranları */
-        #login-screen, #signup-screen, #menu-screen, #scores-screen {
+        #login-screen, #signup-screen, #menu-screen, #scores-screen, #profile-screen {
             display: none;
             position: fixed;
             inset: 0;
@@ -385,7 +385,7 @@
             background: radial-gradient(circle at top, #0b1120 0, #000 45%, #020617 100%);
         }
 
-        #login-screen.active, #signup-screen.active, #menu-screen.active, #scores-screen.active {
+        #login-screen.active, #signup-screen.active, #menu-screen.active, #scores-screen.active, #profile-screen.active {
             display: flex;
         }
 
@@ -692,6 +692,16 @@
             transform: translateY(-1px);
         }
 
+        .avatar-option:hover {
+            background: rgba(34,197,94,0.2);
+            border-color: var(--accent) !important;
+            transform: scale(1.1);
+        }
+
+        #profile-avatar:hover {
+            transform: scale(1.1);
+        }
+
         @media (max-width: 840px) {
             #layout {
                 flex-direction: column;
@@ -778,6 +788,7 @@
             <div class="menu-welcome">Hoş geldin, <span class="menu-username" id="menu-username"></span></div>
             <div class="button-group">
                 <button type="button" class="auth-button" id="btn-start-game">Oyuna Başla</button>
+                <button type="button" class="auth-button secondary" id="btn-view-profile">Profil</button>
                 <button type="button" class="auth-button secondary" id="btn-view-scores">En Yüksek Skorlar</button>
                 <button type="button" class="auth-button danger" id="btn-logout">Çıkış Yap</button>
             </div>
@@ -842,6 +853,84 @@
                 </table>
             </div>
             <button type="button" class="auth-button secondary" id="btn-back-menu">Geri Dön</button>
+        </div>
+    </div>
+
+    <!-- Profil Ekranı -->
+    <div id="profile-screen">
+        <div class="auth-card" style="max-width: 520px; max-height: 90vh; overflow-y: auto;">
+            <div class="auth-title" style="font-size: 28px; margin-bottom: 24px;">👤 Profil</div>
+            
+            <div id="profile-content" style="text-align: center;">
+                <div id="profile-loading" style="color: var(--text-muted); padding: 40px;">
+                    Yükleniyor...
+                </div>
+                
+                <div id="profile-info" style="display: none;">
+                    <!-- Avatar -->
+                    <div style="margin-bottom: 24px;">
+                        <div id="profile-avatar" style="font-size: 80px; margin-bottom: 12px; cursor: pointer; display: inline-block; transition: transform 0.2s;" title="Avatar'ı değiştirmek için tıklayın">
+                            🐍
+                        </div>
+                        <div id="avatar-selector" style="display: none; margin-top: 12px;">
+                            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px;">
+                                <span class="avatar-option" data-avatar="🐍" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🐍</span>
+                                <span class="avatar-option" data-avatar="🐉" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🐉</span>
+                                <span class="avatar-option" data-avatar="🐲" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🐲</span>
+                                <span class="avatar-option" data-avatar="🦎" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🦎</span>
+                                <span class="avatar-option" data-avatar="🐸" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🐸</span>
+                                <span class="avatar-option" data-avatar="🦖" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🦖</span>
+                                <span class="avatar-option" data-avatar="⭐" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">⭐</span>
+                                <span class="avatar-option" data-avatar="🔥" style="font-size: 32px; cursor: pointer; padding: 8px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s;">🔥</span>
+                            </div>
+                            <button type="button" class="auth-button secondary" id="btn-avatar-cancel" style="width: auto; padding: 8px 16px; font-size: 12px;">İptal</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Kullanıcı Adı -->
+                    <div style="margin-bottom: 24px;">
+                        <div class="form-label">Kullanıcı Adı</div>
+                        <div id="profile-username" style="font-size: 24px; font-weight: 600; color: var(--accent);">-</div>
+                    </div>
+                    
+                    <!-- İstatistikler -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px;">
+                        <div style="background: rgba(15,23,42,0.95); border-radius: 12px; padding: 16px; border: 1px solid rgba(148,163,184,0.3);">
+                            <div class="form-label" style="margin-bottom: 8px;">En Yüksek Skor</div>
+                            <div id="profile-highest-score" style="font-size: 28px; font-weight: 700; color: var(--accent-soft);">0</div>
+                        </div>
+                        <div style="background: rgba(15,23,42,0.95); border-radius: 12px; padding: 16px; border: 1px solid rgba(148,163,184,0.3);">
+                            <div class="form-label" style="margin-bottom: 8px;">Toplam Oyun</div>
+                            <div id="profile-total-games" style="font-size: 28px; font-weight: 700; color: var(--accent-soft);">0</div>
+                        </div>
+                        <div style="background: rgba(15,23,42,0.95); border-radius: 12px; padding: 16px; border: 1px solid rgba(148,163,184,0.3);">
+                            <div class="form-label" style="margin-bottom: 8px;">Ortalama Skor</div>
+                            <div id="profile-average-score" style="font-size: 28px; font-weight: 700; color: var(--accent-soft);">0</div>
+                        </div>
+                        <div style="background: rgba(15,23,42,0.95); border-radius: 12px; padding: 16px; border: 1px solid rgba(148,163,184,0.3);">
+                            <div class="form-label" style="margin-bottom: 8px;">Üyelik Tarihi</div>
+                            <div id="profile-created-at" style="font-size: 14px; color: var(--text-main);">-</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Son Skorlar -->
+                    <div style="margin-bottom: 24px;">
+                        <div class="form-label" style="text-align: left; margin-bottom: 12px;">Son 10 Skor</div>
+                        <div id="profile-recent-scores" style="background: rgba(15,23,42,0.95); border-radius: 12px; padding: 12px; border: 1px solid rgba(148,163,184,0.3); max-height: 200px; overflow-y: auto;">
+                            <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">
+                                Henüz skor yok
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="error-message" id="profile-error"></div>
+                    <div class="success-message" id="profile-success"></div>
+                </div>
+            </div>
+            
+            <div class="button-group" style="margin-top: 20px;">
+                <button type="button" class="auth-button secondary" id="btn-profile-back-menu">Geri Dön</button>
+            </div>
         </div>
     </div>
 
@@ -988,6 +1077,7 @@
             document.getElementById("signup-screen").classList.remove("active");
             document.getElementById("menu-screen").classList.remove("active");
             document.getElementById("scores-screen").classList.remove("active");
+            document.getElementById("profile-screen").classList.remove("active");
             document.getElementById("game-layout").classList.remove("active");
             document.getElementById("settings-screen").classList.remove("active");
 
@@ -1001,6 +1091,9 @@
             } else if (screenName === "scores") {
                 document.getElementById("scores-screen").classList.add("active");
                 loadScoresPage();
+            } else if (screenName === "profile") {
+                document.getElementById("profile-screen").classList.add("active");
+                loadProfilePage();
             } else if (screenName === "game") {
                 document.getElementById("game-layout").classList.add("active");
             } else if (screenName === "settings") {
@@ -1161,6 +1254,14 @@
             resetGame();
         });
 
+        document.getElementById("btn-view-profile").addEventListener("click", () => {
+            if (guestMode || !currentUsername) {
+                alert("Profil sayfasını görmek için giriş yapmalısınız.");
+                return;
+            }
+            showScreen("profile");
+        });
+
         document.getElementById("btn-view-scores").addEventListener("click", () => {
             showScreen("scores");
         });
@@ -1176,6 +1277,130 @@
         // ========== SCORES PAGE ==========
         document.getElementById("btn-back-menu").addEventListener("click", () => {
             showScreen("menu");
+        });
+
+        // ========== PROFILE PAGE ==========
+        document.getElementById("btn-profile-back-menu").addEventListener("click", () => {
+            showScreen("menu");
+        });
+
+        async function loadProfilePage() {
+            const loadingEl = document.getElementById("profile-loading");
+            const infoEl = document.getElementById("profile-info");
+            const errorEl = document.getElementById("profile-error");
+            const successEl = document.getElementById("profile-success");
+            
+            loadingEl.style.display = "block";
+            infoEl.style.display = "none";
+            errorEl.textContent = "";
+            successEl.textContent = "";
+            
+            try {
+                const res = await fetch(`/api/profile/?username=${encodeURIComponent(currentUsername)}`);
+                if (!res.ok) throw new Error("http");
+                const data = await res.json();
+                
+                if (!data.ok) {
+                    throw new Error(data.message || "Profil yüklenemedi");
+                }
+                
+                const profile = data.profile;
+                
+                // Profil bilgilerini doldur
+                document.getElementById("profile-username").textContent = profile.username;
+                document.getElementById("profile-avatar").textContent = profile.avatar || "🐍";
+                document.getElementById("profile-highest-score").textContent = profile.highest_score || 0;
+                document.getElementById("profile-total-games").textContent = profile.total_games || 0;
+                document.getElementById("profile-average-score").textContent = profile.average_score || 0;
+                
+                // Tarih formatla
+                if (profile.created_at) {
+                    const date = new Date(profile.created_at);
+                    const formattedDate = date.toLocaleDateString("tr-TR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric"
+                    });
+                    document.getElementById("profile-created-at").textContent = formattedDate;
+                }
+                
+                // Son skorları göster
+                const recentScoresEl = document.getElementById("profile-recent-scores");
+                if (profile.recent_scores && profile.recent_scores.length > 0) {
+                    recentScoresEl.innerHTML = profile.recent_scores.map((score, index) => {
+                        const date = new Date(score.created_at);
+                        const formattedDate = date.toLocaleDateString("tr-TR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        });
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(148,163,184,0.1);">
+                                <div>
+                                    <span style="color: var(--text-muted); font-size: 11px;">${formattedDate}</span>
+                                </div>
+                                <div style="font-weight: 600; color: var(--accent-soft);">${score.value}</div>
+                            </div>
+                        `;
+                    }).join("");
+                } else {
+                    recentScoresEl.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">Henüz skor yok</div>';
+                }
+                
+                loadingEl.style.display = "none";
+                infoEl.style.display = "block";
+            } catch (err) {
+                loadingEl.style.display = "none";
+                errorEl.textContent = "Profil yüklenirken hata oluştu: " + (err.message || "Bilinmeyen hata");
+            }
+        }
+
+        // Avatar güncelleme
+        let selectedAvatar = null;
+        const profileAvatar = document.getElementById("profile-avatar");
+        const avatarSelector = document.getElementById("avatar-selector");
+        const avatarOptions = document.querySelectorAll(".avatar-option");
+        const btnAvatarCancel = document.getElementById("btn-avatar-cancel");
+
+        profileAvatar.addEventListener("click", () => {
+            if (guestMode || !currentUsername) return;
+            avatarSelector.style.display = avatarSelector.style.display === "none" ? "block" : "none";
+        });
+
+        avatarOptions.forEach(option => {
+            option.addEventListener("click", async () => {
+                selectedAvatar = option.getAttribute("data-avatar");
+                profileAvatar.textContent = selectedAvatar;
+                
+                // API'ye gönder
+                try {
+                    const res = await fetch("/api/profile/avatar/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: currentUsername, avatar: selectedAvatar })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.ok) {
+                        document.getElementById("profile-success").textContent = "Avatar güncellendi! ✅";
+                        setTimeout(() => {
+                            document.getElementById("profile-success").textContent = "";
+                        }, 3000);
+                    } else {
+                        document.getElementById("profile-error").textContent = data.message || "Avatar güncellenemedi";
+                    }
+                } catch (err) {
+                    document.getElementById("profile-error").textContent = "Bağlantı hatası";
+                }
+                
+                avatarSelector.style.display = "none";
+            });
+        });
+
+        btnAvatarCancel.addEventListener("click", () => {
+            avatarSelector.style.display = "none";
         });
 
         // ========== SETTINGS ==========
