@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> Snake Game </title>
     <style>
         :root {
@@ -709,13 +710,178 @@
             }
         }
 
+        /* Mobil Kontrol Butonları */
+        #mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 100%;
+            max-width: 300px;
+            padding: 0 20px;
+        }
+
+        #mobile-controls.active {
+            display: block;
+        }
+
+        .mobile-control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 250px;
+            margin: 0 auto;
+        }
+
+        .mobile-control-btn {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 12px;
+            background: rgba(15,23,42,0.95);
+            color: var(--text-main);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(148,163,184,0.4);
+            transition: all 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .mobile-control-btn:active {
+            background: rgba(34,197,94,0.3);
+            border-color: var(--accent);
+            transform: scale(0.95);
+        }
+
+        .mobile-control-btn.up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .mobile-control-btn.down {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .mobile-control-btn.left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .mobile-control-btn.right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .mobile-control-btn.center {
+            grid-column: 2;
+            grid-row: 2;
+            font-size: 18px;
+            background: rgba(34,197,94,0.2);
+            border-color: var(--accent);
+        }
+
+        /* Touch Swipe İçin */
+        #game {
+            touch-action: none;
+        }
+
+        @media (max-width: 840px) {
+            #layout {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #leaderboard-card {
+                width: 100%;
+                max-width: 400px;
+                margin-top: 20px;
+            }
+
+            #game-wrapper {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            canvas {
+                width: 100%;
+                height: auto;
+                max-width: 400px;
+                max-height: 400px;
+            }
+        }
+
         @media (max-width: 520px) {
             h1 {
                 font-size: 24px;
                 margin-top: 18px;
             }
             body {
-                padding-bottom: 40px;
+                padding-bottom: 120px;
+            }
+
+            #mobile-controls {
+                display: block;
+            }
+
+            .auth-card, .settings-card {
+                min-width: auto;
+                width: 90%;
+                max-width: 100%;
+                padding: 24px 20px;
+            }
+
+            #game-wrapper {
+                padding: 12px;
+            }
+
+            #game-card {
+                padding: 10px 12px;
+            }
+
+            #hud {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .hud-left, .hud-right, .hud-center {
+                justify-content: center;
+                width: 100%;
+            }
+
+            #leaderboard-card {
+                width: 100%;
+                max-width: 100%;
+                margin-top: 20px;
+            }
+
+            .pill {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            canvas {
+                max-width: 100%;
+            }
+
+            #mobile-controls {
+                bottom: 10px;
+                padding: 0 10px;
+            }
+
+            .mobile-control-btn {
+                font-size: 20px;
+                border-radius: 10px;
             }
         }
     </style>
@@ -1036,6 +1202,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Mobil Kontrol Butonları -->
+    <div id="mobile-controls">
+        <div class="mobile-control-grid">
+            <button class="mobile-control-btn up" id="btn-mobile-up" aria-label="Yukarı">↑</button>
+            <button class="mobile-control-btn left" id="btn-mobile-left" aria-label="Sol">←</button>
+            <button class="mobile-control-btn center" id="btn-mobile-pause" aria-label="Duraklat">⏸</button>
+            <button class="mobile-control-btn right" id="btn-mobile-right" aria-label="Sağ">→</button>
+            <button class="mobile-control-btn down" id="btn-mobile-down" aria-label="Aşağı">↓</button>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -1101,6 +1278,9 @@
                 updateSettingsDisplay();
             }
             currentScreen = screenName;
+            
+            // Mobil kontrolleri güncelle
+            updateMobileControlsVisibility();
         }
 
         function updateSettingsDisplay() {
@@ -1589,6 +1769,9 @@
             updateLivesDisplay();
             saveStatus.textContent = "";
             btnSave.disabled = false;
+            if (btnMobilePause) {
+                btnMobilePause.textContent = "⏸";
+            }
             hideOverlay();
             restartLoop();
         }
@@ -2194,6 +2377,19 @@
             }
         }
 
+        function handleDirection(direction) {
+            // direction: "up", "down", "left", "right"
+            if (direction === "up" && vy !== 1) {
+                vx = 0; vy = -1;
+            } else if (direction === "down" && vy !== -1) {
+                vx = 0; vy = 1;
+            } else if (direction === "left" && vx !== 1) {
+                vx = -1; vy = 0;
+            } else if (direction === "right" && vx !== -1) {
+                vx = 1; vy = 0;
+            }
+        }
+
         document.addEventListener("keydown", (e) => {
             // Ayarlar ekranındayken kontrolleri devre dışı bırak
             if (currentScreen === "settings") {
@@ -2209,8 +2405,160 @@
             } else if (e.key.toLowerCase() === "p") {
                 if (gameOver) return;
                 paused = !paused;
+                if (btnMobilePause) {
+                    btnMobilePause.textContent = paused ? "▶" : "⏸";
+                }
             }
         });
+
+        // ========== MOBİL KONTROLLER ==========
+        // Mobil kontrol butonları
+        const btnMobileUp = document.getElementById("btn-mobile-up");
+        const btnMobileDown = document.getElementById("btn-mobile-down");
+        const btnMobileLeft = document.getElementById("btn-mobile-left");
+        const btnMobileRight = document.getElementById("btn-mobile-right");
+        const btnMobilePause = document.getElementById("btn-mobile-pause");
+        const mobileControls = document.getElementById("mobile-controls");
+
+        // Mobil buton event listener'ları
+        if (btnMobileUp) {
+            btnMobileUp.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("up");
+                }
+            });
+            btnMobileUp.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("up");
+                }
+            });
+        }
+
+        if (btnMobileDown) {
+            btnMobileDown.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("down");
+                }
+            });
+            btnMobileDown.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("down");
+                }
+            });
+        }
+
+        if (btnMobileLeft) {
+            btnMobileLeft.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("left");
+                }
+            });
+            btnMobileLeft.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("left");
+                }
+            });
+        }
+
+        if (btnMobileRight) {
+            btnMobileRight.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("right");
+                }
+            });
+            btnMobileRight.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver && !paused) {
+                    handleDirection("right");
+                }
+            });
+        }
+
+        if (btnMobilePause) {
+            btnMobilePause.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver) {
+                    paused = !paused;
+                    btnMobilePause.textContent = paused ? "▶" : "⏸";
+                }
+            });
+            btnMobilePause.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (currentScreen === "game" && !gameOver) {
+                    paused = !paused;
+                    btnMobilePause.textContent = paused ? "▶" : "⏸";
+                }
+            });
+        }
+
+        // Mobil kontrolleri sadece oyun ekranında göster
+        function updateMobileControlsVisibility() {
+            if (currentScreen === "game") {
+                mobileControls.classList.add("active");
+            } else {
+                mobileControls.classList.remove("active");
+            }
+        }
+
+        // Swipe (kaydırma) kontrolleri
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 30; // Minimum kaydırma mesafesi
+
+        const gameCanvas = document.getElementById("game");
+        
+        if (gameCanvas) {
+            gameCanvas.addEventListener("touchstart", (e) => {
+                if (currentScreen !== "game" || gameOver || paused) return;
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            }, { passive: true });
+
+            gameCanvas.addEventListener("touchend", (e) => {
+                if (currentScreen !== "game" || gameOver || paused) return;
+                const touch = e.changedTouches[0];
+                touchEndX = touch.clientX;
+                touchEndY = touch.clientY;
+                
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absDeltaX = Math.abs(deltaX);
+                const absDeltaY = Math.abs(deltaY);
+
+                // Yeterince kaydırma yapıldı mı?
+                if (absDeltaX < minSwipeDistance && absDeltaY < minSwipeDistance) {
+                    return; // Çok küçük hareket, yok say
+                }
+
+                // Hangi yöne kaydırıldı?
+                if (absDeltaX > absDeltaY) {
+                    // Yatay kaydırma
+                    if (deltaX > 0) {
+                        handleDirection("right");
+                    } else {
+                        handleDirection("left");
+                    }
+                } else {
+                    // Dikey kaydırma
+                    if (deltaY > 0) {
+                        handleDirection("down");
+                    } else {
+                        handleDirection("up");
+                    }
+                }
+            }, { passive: true });
+        }
+
 
         btnRestart.addEventListener("click", () => {
             resetGame();
