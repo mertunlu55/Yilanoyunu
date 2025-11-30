@@ -713,26 +713,6 @@
             }
         }
 
-        /* Mobil Kontrol Butonları */
-        #mobile-controls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            width: 100%;
-            max-width: 280px;
-            padding: 0 20px;
-            pointer-events: none;
-            background: transparent;
-        }
-
-        #mobile-controls.active {
-            display: block;
-            pointer-events: auto;
-        }
-
         /* Mobil kontrollerin oyun ekranına gelmemesi için */
         @media (max-width: 520px) {
             #game-layout {
@@ -743,72 +723,6 @@
                 position: relative;
                 z-index: 1;
             }
-
-            #mobile-controls {
-                z-index: 5;
-            }
-        }
-
-        .mobile-control-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
-            width: 100%;
-            max-width: 250px;
-            margin: 0 auto;
-        }
-
-        .mobile-control-btn {
-            aspect-ratio: 1;
-            border: none;
-            border-radius: 12px;
-            background: rgba(15,23,42,0.95);
-            color: var(--text-main);
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid rgba(148,163,184,0.4);
-            transition: all 0.15s;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        .mobile-control-btn:active {
-            background: rgba(34,197,94,0.3);
-            border-color: var(--accent);
-            transform: scale(0.95);
-        }
-
-        .mobile-control-btn.up {
-            grid-column: 2;
-            grid-row: 1;
-        }
-
-        .mobile-control-btn.down {
-            grid-column: 2;
-            grid-row: 3;
-        }
-
-        .mobile-control-btn.left {
-            grid-column: 1;
-            grid-row: 2;
-        }
-
-        .mobile-control-btn.right {
-            grid-column: 3;
-            grid-row: 2;
-        }
-
-        .mobile-control-btn.center {
-            grid-column: 2;
-            grid-row: 2;
-            font-size: 18px;
-            background: rgba(34,197,94,0.2);
-            border-color: var(--accent);
         }
 
         /* Touch Swipe İçin */
@@ -855,12 +769,11 @@
             }
 
             body {
-                padding-bottom: 180px; /* Mobil kontroller için yeterli boşluk */
+                padding-bottom: 20px;
             }
 
             #game-layout {
-                padding-bottom: 180px; /* Mobil kontroller için boşluk */
-                min-height: calc(100vh - 180px);
+                padding-bottom: 20px;
             }
 
             #layout {
@@ -870,10 +783,6 @@
                 margin-bottom: 0;
             }
 
-            #mobile-controls {
-                display: block;
-                bottom: 20px;
-            }
 
             .auth-card, .settings-card {
                 min-width: auto;
@@ -971,21 +880,6 @@
                 padding: 6px 8px;
             }
 
-            #mobile-controls {
-                bottom: 15px;
-                padding: 0 10px;
-                max-width: 260px;
-            }
-
-            .mobile-control-grid {
-                max-width: 240px;
-                gap: 6px;
-            }
-
-            .mobile-control-btn {
-                font-size: 18px;
-                border-radius: 8px;
-            }
 
             .pill {
                 font-size: 9px;
@@ -997,12 +891,6 @@
             }
         }
 
-        /* Oyun ekranında mobil kontrollerin görünürlüğü */
-        @media (max-width: 520px) {
-            #game-layout.active #mobile-controls {
-                display: block;
-            }
-        }
     </style>
 </head>
 <body>
@@ -1322,16 +1210,6 @@
         </div>
     </div>
 
-    <!-- Mobil Kontrol Butonları -->
-    <div id="mobile-controls">
-        <div class="mobile-control-grid">
-            <button class="mobile-control-btn up" id="btn-mobile-up" aria-label="Yukarı">↑</button>
-            <button class="mobile-control-btn left" id="btn-mobile-left" aria-label="Sol">←</button>
-            <button class="mobile-control-btn center" id="btn-mobile-pause" aria-label="Duraklat">⏸</button>
-            <button class="mobile-control-btn right" id="btn-mobile-right" aria-label="Sağ">→</button>
-            <button class="mobile-control-btn down" id="btn-mobile-down" aria-label="Aşağı">↓</button>
-        </div>
-    </div>
     </div>
 
     <script>
@@ -1397,9 +1275,6 @@
                 updateSettingsDisplay();
             }
             currentScreen = screenName;
-            
-            // Mobil kontrolleri güncelle
-            updateMobileControlsVisibility();
         }
 
         function updateSettingsDisplay() {
@@ -1888,9 +1763,6 @@
             updateLivesDisplay();
             saveStatus.textContent = "";
             btnSave.disabled = false;
-            if (btnMobilePause) {
-                btnMobilePause.textContent = "⏸";
-            }
             hideOverlay();
             restartLoop();
         }
@@ -2524,127 +2396,38 @@
             } else if (e.key.toLowerCase() === "p") {
                 if (gameOver) return;
                 paused = !paused;
-                if (btnMobilePause) {
-                    btnMobilePause.textContent = paused ? "▶" : "⏸";
-                }
             }
         });
 
-        // ========== MOBİL KONTROLLER ==========
-        // Mobil kontrol butonları
-        const btnMobileUp = document.getElementById("btn-mobile-up");
-        const btnMobileDown = document.getElementById("btn-mobile-down");
-        const btnMobileLeft = document.getElementById("btn-mobile-left");
-        const btnMobileRight = document.getElementById("btn-mobile-right");
-        const btnMobilePause = document.getElementById("btn-mobile-pause");
-        const mobileControls = document.getElementById("mobile-controls");
-
-        // Mobil buton event listener'ları
-        if (btnMobileUp) {
-            btnMobileUp.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("up");
-                }
-            });
-            btnMobileUp.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("up");
-                }
-            });
-        }
-
-        if (btnMobileDown) {
-            btnMobileDown.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("down");
-                }
-            });
-            btnMobileDown.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("down");
-                }
-            });
-        }
-
-        if (btnMobileLeft) {
-            btnMobileLeft.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("left");
-                }
-            });
-            btnMobileLeft.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("left");
-                }
-            });
-        }
-
-        if (btnMobileRight) {
-            btnMobileRight.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("right");
-                }
-            });
-            btnMobileRight.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver && !paused) {
-                    handleDirection("right");
-                }
-            });
-        }
-
-        if (btnMobilePause) {
-            btnMobilePause.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver) {
-                    paused = !paused;
-                    btnMobilePause.textContent = paused ? "▶" : "⏸";
-                }
-            });
-            btnMobilePause.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (currentScreen === "game" && !gameOver) {
-                    paused = !paused;
-                    btnMobilePause.textContent = paused ? "▶" : "⏸";
-                }
-            });
-        }
-
-        // Mobil kontrolleri sadece oyun ekranında göster
-        function updateMobileControlsVisibility() {
-            if (currentScreen === "game") {
-                mobileControls.classList.add("active");
-            } else {
-                mobileControls.classList.remove("active");
-            }
-        }
-
-        // Swipe (kaydırma) kontrolleri
+        // ========== MOBİL KONTROLLER (Swipe/Kaydırma) ==========
+        // Swipe (kaydırma) kontrolleri - Sadece parmakla kaydırarak oynama
         let touchStartX = 0;
         let touchStartY = 0;
         let touchEndX = 0;
         let touchEndY = 0;
-        const minSwipeDistance = 30; // Minimum kaydırma mesafesi
+        const minSwipeDistance = 20; // Minimum kaydırma mesafesi (daha hassas)
 
-        const gameCanvas = document.getElementById("game");
+        const gameLayout = document.getElementById("game-layout");
         
-        if (gameCanvas) {
-            gameCanvas.addEventListener("touchstart", (e) => {
+        // Tüm oyun ekranına swipe ekle (sadece canvas değil)
+        if (gameLayout) {
+            gameLayout.addEventListener("touchstart", (e) => {
                 if (currentScreen !== "game" || gameOver || paused) return;
+                // Overlay veya butonlara tıklanıyorsa swipe yapma
+                if (e.target.closest("#overlay") || e.target.closest("button") || e.target.closest("input")) {
+                    return;
+                }
                 const touch = e.touches[0];
                 touchStartX = touch.clientX;
                 touchStartY = touch.clientY;
             }, { passive: true });
 
-            gameCanvas.addEventListener("touchend", (e) => {
+            gameLayout.addEventListener("touchend", (e) => {
                 if (currentScreen !== "game" || gameOver || paused) return;
+                // Overlay veya butonlara tıklanıyorsa swipe yapma
+                if (e.target.closest("#overlay") || e.target.closest("button") || e.target.closest("input")) {
+                    return;
+                }
                 const touch = e.changedTouches[0];
                 touchEndX = touch.clientX;
                 touchEndY = touch.clientY;
