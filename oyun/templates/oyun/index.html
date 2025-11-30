@@ -29,6 +29,7 @@
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
 
         body::before {
@@ -537,6 +538,8 @@
 
         #game-layout {
             display: none;
+            width: 100%;
+            max-width: 100%;
         }
 
         #game-layout.active {
@@ -717,14 +720,33 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 100;
+            z-index: 10;
             width: 100%;
-            max-width: 300px;
+            max-width: 280px;
             padding: 0 20px;
+            pointer-events: none;
+            background: transparent;
         }
 
         #mobile-controls.active {
             display: block;
+            pointer-events: auto;
+        }
+
+        /* Mobil kontrollerin oyun ekranına gelmemesi için */
+        @media (max-width: 520px) {
+            #game-layout {
+                overflow: visible;
+            }
+
+            #game-wrapper {
+                position: relative;
+                z-index: 1;
+            }
+
+            #mobile-controls {
+                z-index: 5;
+            }
         }
 
         .mobile-control-grid {
@@ -821,15 +843,36 @@
 
         @media (max-width: 520px) {
             h1 {
-                font-size: 24px;
-                margin-top: 18px;
+                font-size: 20px;
+                margin-top: 12px;
+                margin-bottom: 4px;
             }
+
+            .subtitle {
+                font-size: 11px;
+                padding: 0 10px;
+                margin-bottom: 12px;
+            }
+
             body {
-                padding-bottom: 120px;
+                padding-bottom: 180px; /* Mobil kontroller için yeterli boşluk */
+            }
+
+            #game-layout {
+                padding-bottom: 180px; /* Mobil kontroller için boşluk */
+                min-height: calc(100vh - 180px);
+            }
+
+            #layout {
+                margin-top: 12px;
+                gap: 12px;
+                padding-bottom: 0;
+                margin-bottom: 0;
             }
 
             #mobile-controls {
                 display: block;
+                bottom: 20px;
             }
 
             .auth-card, .settings-card {
@@ -840,48 +883,124 @@
             }
 
             #game-wrapper {
-                padding: 12px;
+                padding: 10px;
+                margin-bottom: 0;
+                max-width: 100%;
+            }
+
+            #game-wrapper canvas {
+                margin: 0 auto;
             }
 
             #game-card {
-                padding: 10px 12px;
+                padding: 8px 10px;
+            }
+
+            canvas {
+                max-width: 100%;
+                max-height: 280px;
+                width: auto;
+                height: auto;
+                aspect-ratio: 1;
             }
 
             #hud {
-                flex-direction: column;
-                gap: 8px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 8px;
+                font-size: 11px;
             }
 
-            .hud-left, .hud-right, .hud-center {
-                justify-content: center;
+            .hud-left, .hud-right {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .hud-center {
                 width: 100%;
+                order: 3;
+                margin-top: 4px;
             }
 
             #leaderboard-card {
                 width: 100%;
                 max-width: 100%;
-                margin-top: 20px;
+                margin-top: 12px;
+                margin-bottom: 0;
+                display: none; /* Mobilde leaderboard'u gizle, yer tasarrufu için */
             }
 
             .pill {
-                font-size: 11px;
-                padding: 4px 8px;
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+
+            #info {
+                font-size: 10px;
+                margin-top: 6px;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .keys {
+                font-size: 9px;
             }
         }
 
         @media (max-width: 400px) {
+            h1 {
+                font-size: 18px;
+                margin-top: 10px;
+            }
+
+            .subtitle {
+                font-size: 10px;
+            }
+
             canvas {
                 max-width: 100%;
+                max-height: 280px;
+            }
+
+            #game-wrapper {
+                padding: 8px;
+            }
+
+            #game-card {
+                padding: 6px 8px;
             }
 
             #mobile-controls {
-                bottom: 10px;
+                bottom: 15px;
                 padding: 0 10px;
+                max-width: 260px;
+            }
+
+            .mobile-control-grid {
+                max-width: 240px;
+                gap: 6px;
             }
 
             .mobile-control-btn {
-                font-size: 20px;
-                border-radius: 10px;
+                font-size: 18px;
+                border-radius: 8px;
+            }
+
+            .pill {
+                font-size: 9px;
+                padding: 2px 5px;
+            }
+
+            #hud {
+                font-size: 10px;
+            }
+        }
+
+        /* Oyun ekranında mobil kontrollerin görünürlüğü */
+        @media (max-width: 520px) {
+            #game-layout.active #mobile-controls {
+                display: block;
             }
         }
     </style>
