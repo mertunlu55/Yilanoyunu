@@ -12,13 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 DEBUG = os.environ.get("DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "yilanoyunu-f0ss.onrender.com",
-    "yilanoyunu-1.onrender.com",
-]
-
+ALLOWED_HOSTS += [".onrender.com"]
 # Apps
 INSTALLED_APPS = [
     "django.contrib.admin",
