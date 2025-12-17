@@ -1,19 +1,25 @@
-import os
+"""
+Django settings for projem project.
+"""
+
 from pathlib import Path
+import os
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-change-this"
-
-DEBUG = True
+# SECURITY
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
+DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = [
-    "yilanoyunu-f0ss.onrender.com",
     "localhost",
     "127.0.0.1",
+    "yilanoyunu-f0ss.onrender.com",
+    "yilanoyunu-1.onrender.com",
 ]
 
+# Apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -49,20 +55,30 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
         },
-    },
+    }
 ]
 
 WSGI_APPLICATION = "projem.wsgi.application"
 
+# Database
+# Render'da DATABASE_URL verilecek. Lokal geliştirmede yoksa sqlite'a düşsün.
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
+        default=f"sqlite:///{BASE_DIR/'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=True,
+        ssl_require=False,
     )
 }
 
+# Static
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# I18N
+LANGUAGE_CODE = "tr"
+TIME_ZONE = "Europe/Istanbul"
+USE_I18N = True
+USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
