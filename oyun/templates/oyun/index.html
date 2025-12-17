@@ -1001,6 +1001,38 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <div class="settings-section-title">Oyun Modu</div>
+                <div class="control-option" data-mode="klasik">
+                    <input type="radio" name="gamemode" id="mode-klasik" value="klasik" checked>
+                    <label for="mode-klasik" class="control-option-label">
+                        <div>Klasik</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Duvardan geçer, kendi kuyruğuna çarpınca ölür</div>
+                    </label>
+                </div>
+                <div class="control-option" data-mode="duvarlı">
+                    <input type="radio" name="gamemode" id="mode-duvarlı" value="duvarlı">
+                    <label for="mode-duvarlı" class="control-option-label">
+                        <div>Duvarlı</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sınırdan çarpınca oyun biter</div>
+                    </label>
+                </div>
+                <div class="control-option" data-mode="hızlı">
+                    <input type="radio" name="gamemode" id="mode-hızlı" value="hızlı">
+                    <label for="mode-hızlı" class="control-option-label">
+                        <div>Hızlı</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">%35 daha hızlı hareket eder</div>
+                    </label>
+                </div>
+                <div class="control-option" data-mode="random">
+                    <input type="radio" name="gamemode" id="mode-random" value="random">
+                    <label for="mode-random" class="control-option-label">
+                        <div>Random Harita</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Rastgele engeller ve duvar blokları</div>
+                    </label>
+                </div>
+            </div>
+
             <div class="button-group">
                 <button type="button" class="settings-button" id="btn-settings-close">Kaydet ve Kapat</button>
                 <button type="button" class="settings-button secondary" id="btn-settings-menu">Menüye Dön</button>
@@ -1220,6 +1252,10 @@
 
         // ========== CONTROL SYSTEM ==========
         let controlScheme = localStorage.getItem("snakeControlScheme") || "arrows"; // "arrows" veya "wasd"
+        
+        // ========== GAME MODE SYSTEM ==========
+        let gameMode = localStorage.getItem("snakeGameMode") || "klasik"; // "klasik", "duvarlı", "hızlı", "random"
+        let obstacles = []; // Random harita modu için engeller
 
         function updateControlInfo() {
             const controlInfo = document.getElementById("control-info");
@@ -1293,6 +1329,19 @@
                 wasdDiv.classList.add("selected");
                 arrowsDiv.classList.remove("selected");
             }
+            
+            // Oyun modu seçeneğini güncelle
+            const modeOptions = document.querySelectorAll('input[name="gamemode"]');
+            const modeDivs = document.querySelectorAll('[data-mode]');
+            modeDivs.forEach(div => div.classList.remove("selected"));
+            
+            modeOptions.forEach(option => {
+                if (option.value === gameMode) {
+                    option.checked = true;
+                    const modeDiv = document.querySelector(`[data-mode="${gameMode}"]`);
+                    if (modeDiv) modeDiv.classList.add("selected");
+                }
+            });
         }
 
         // ========== PASSWORD TOGGLE ==========
@@ -1590,6 +1639,12 @@
                 localStorage.setItem("snakeControlScheme", controlScheme);
                 updateControlInfo();
             }
+            // Oyun modu seçeneğini kaydet
+            const selectedMode = document.querySelector('input[name="gamemode"]:checked');
+            if (selectedMode) {
+                gameMode = selectedMode.value;
+                localStorage.setItem("snakeGameMode", gameMode);
+            }
             showScreen("game");
         });
 
@@ -1601,16 +1656,35 @@
                 localStorage.setItem("snakeControlScheme", controlScheme);
                 updateControlInfo();
             }
+            // Oyun modu seçeneğini kaydet
+            const selectedMode = document.querySelector('input[name="gamemode"]:checked');
+            if (selectedMode) {
+                gameMode = selectedMode.value;
+                localStorage.setItem("snakeGameMode", gameMode);
+            }
             showScreen("menu");
         });
 
         // Kontrol seçeneklerini değiştir
         document.querySelectorAll('input[name="controls"]').forEach(radio => {
             radio.addEventListener("change", () => {
-                document.querySelectorAll('.control-option').forEach(opt => {
+                document.querySelectorAll('[data-control]').forEach(opt => {
                     opt.classList.remove("selected");
                 });
                 const selectedDiv = document.querySelector(`[data-control="${radio.value}"]`);
+                if (selectedDiv) {
+                    selectedDiv.classList.add("selected");
+                }
+            });
+        });
+        
+        // Oyun modu seçeneklerini değiştir
+        document.querySelectorAll('input[name="gamemode"]').forEach(radio => {
+            radio.addEventListener("change", () => {
+                document.querySelectorAll('[data-mode]').forEach(opt => {
+                    opt.classList.remove("selected");
+                });
+                const selectedDiv = document.querySelector(`[data-mode="${radio.value}"]`);
                 if (selectedDiv) {
                     selectedDiv.classList.add("selected");
                 }
@@ -1711,8 +1785,57 @@
                     y: Math.floor(Math.random() * tileCount)
                 };
                 attempts++;
-            } while (snake && snake.some(s => s.x === position.x && s.y === position.y) && attempts < 200);
+            } while (
+                (snake && snake.some(s => s.x === position.x && s.y === position.y)) ||
+                (obstacles && obstacles.some(obs => obs.x === position.x && obs.y === position.y)) ||
+                attempts < 200
+            );
             return position;
+        }
+        
+        function generateObstacles() {
+            obstacles = [];
+            if (gameMode !== "random") return;
+            
+            // Yılanın başlangıç konumu
+            const startPositions = [
+                {x: 10, y: 10},
+                {x: 9, y: 10},
+                {x: 8, y: 10}
+            ];
+            
+            // Toplam engel sayısı (harita boyutuna göre)
+            const obstacleCount = Math.floor((tileCount * tileCount) * 0.15); // %15 engel
+            
+            for (let i = 0; i < obstacleCount; i++) {
+                let position;
+                let attempts = 0;
+                let valid = false;
+                
+                do {
+                    position = {
+                        x: Math.floor(Math.random() * tileCount),
+                        y: Math.floor(Math.random() * tileCount)
+                    };
+                    attempts++;
+                    
+                    // Yılanın başlangıç konumu ile çakışmasın
+                    const conflictsWithStart = startPositions.some(
+                        pos => pos.x === position.x && pos.y === position.y
+                    );
+                    
+                    // Mevcut engellerle çakışmasın
+                    const conflictsWithObstacles = obstacles.some(
+                        obs => obs.x === position.x && obs.y === position.y
+                    );
+                    
+                    valid = !conflictsWithStart && !conflictsWithObstacles;
+                } while (!valid && attempts < 500);
+                
+                if (valid) {
+                    obstacles.push(position);
+                }
+            }
         }
 
         function updateLivesDisplay() {
@@ -1736,7 +1859,13 @@
             ];
             vx = 1;
             vy = 0;
+            
+            // Oyun moduna göre engelleri oluştur
+            generateObstacles();
+            
+            // Yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
             food = randomFood();
+            
             score = 0;
             level = 1;
             paused = false;
@@ -1769,7 +1898,14 @@
             // Her 8 puanda 5ms azalt (daha yavaş hızlanma)
             const step = Math.floor(sc / 8) * 5;
             // Minimum 80ms'ye kadar düşebilir (daha yavaş maksimum hız)
-            return Math.max(80, base - step);
+            let interval = Math.max(80, base - step);
+            
+            // Hızlı mod: %35 daha hızlı (interval'i 1.35'e böl)
+            if (gameMode === "hızlı") {
+                interval = Math.floor(interval / 1.35);
+            }
+            
+            return interval;
         }
 
         function updateSpeedUI() {
@@ -1816,6 +1952,32 @@
                 ctx.moveTo(0, i * gridSize + 0.5);
                 ctx.lineTo(canvas.width, i * gridSize + 0.5);
                 ctx.stroke();
+            }
+            
+            // Random harita modunda engelleri çiz
+            if (gameMode === "random" && obstacles.length > 0) {
+                ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
+                ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+                ctx.lineWidth = 2;
+                
+                for (const obstacle of obstacles) {
+                    const ox = obstacle.x * gridSize;
+                    const oy = obstacle.y * gridSize;
+                    
+                    // Engeli çiz (koyu gri blok)
+                    ctx.fillRect(ox + 2, oy + 2, gridSize - 4, gridSize - 4);
+                    ctx.strokeRect(ox + 2, oy + 2, gridSize - 4, gridSize - 4);
+                    
+                    // İç çizgi efekti
+                    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+                    ctx.beginPath();
+                    ctx.moveTo(ox + 4, oy + 4);
+                    ctx.lineTo(ox + gridSize - 4, oy + gridSize - 4);
+                    ctx.moveTo(ox + gridSize - 4, oy + 4);
+                    ctx.lineTo(ox + 4, oy + gridSize - 4);
+                    ctx.stroke();
+                    ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+                }
             }
         }
 
@@ -2078,11 +2240,12 @@
                         position: randomFood(),
                         spawnTime: currentTime
                     };
-                    // Yılan veya yem ile çakışmasın
+                    // Yılan, yem veya engel ile çakışmasın
                     while (
                         (tempLife.position.x === snake[0].x && tempLife.position.y === snake[0].y) ||
                         (tempLife.position.x === food.x && tempLife.position.y === food.y) ||
-                        snake.some(s => s.x === tempLife.position.x && s.y === tempLife.position.y)
+                        snake.some(s => s.x === tempLife.position.x && s.y === tempLife.position.y) ||
+                        (obstacles && obstacles.some(obs => obs.x === tempLife.position.x && obs.y === tempLife.position.y))
                     ) {
                         tempLife.position = randomFood();
                     }
@@ -2091,7 +2254,7 @@
                 }
             }
 
-            const head = {
+            let head = {
                 x: snake[0].x + vx,
                 y: snake[0].y + vy
             };
@@ -2101,7 +2264,24 @@
                 head.x < 0 || head.x >= tileCount ||
                 head.y < 0 || head.y >= tileCount
             ) {
-                return handleCollision();
+                // Duvarlı modda duvardan çarpınca oyun biter
+                if (gameMode === "duvarlı") {
+                    return endGame();
+                }
+                // Klasik, hızlı ve random modda duvardan geçer (wrap around)
+                if (head.x < 0) head.x = tileCount - 1;
+                if (head.x >= tileCount) head.x = 0;
+                if (head.y < 0) head.y = tileCount - 1;
+                if (head.y >= tileCount) head.y = 0;
+            }
+            
+            // Random harita modunda engellere çarpma kontrolü
+            if (gameMode === "random" && obstacles.length > 0) {
+                for (const obstacle of obstacles) {
+                    if (head.x === obstacle.x && head.y === obstacle.y) {
+                        return handleCollision();
+                    }
+                }
             }
 
             // Kendi vücuduna çarpma kontrolü (grace period varsa ignore_self)
@@ -2143,7 +2323,17 @@
                 const centerY = head.y * gridSize + gridSize / 2;
                 spawnParticles(centerX, centerY, "rgb(248,113,113)");
 
+                // Yeni yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
                 food = randomFood();
+                // Yem engelle çakışıyorsa tekrar oluştur
+                let attempts = 0;
+                while (
+                    obstacles.some(obs => obs.x === food.x && obs.y === food.y) &&
+                    attempts < 50
+                ) {
+                    food = randomFood();
+                    attempts++;
+                }
 
                 const newLevel = 1 + Math.floor(score / 5);
                 if (newLevel !== level) {
