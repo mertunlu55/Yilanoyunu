@@ -1716,18 +1716,14 @@
         }
 
         function updateLivesDisplay() {
-            const totalLives = lives + activeTemporaryLives.length;
-            const maxDisplay = 3;
+            const totalLives = Math.min(3, lives + activeTemporaryLives.length); // Maksimum 3 can
             let displayText = "";
-            for (let i = 0; i < maxDisplay; i++) {
+            for (let i = 0; i < 3; i++) {
                 if (i < totalLives) {
                     displayText += "❤️";
                 } else {
                     displayText += "🤍";
                 }
-            }
-            if (totalLives > maxDisplay) {
-                displayText += ` +${totalLives - maxDisplay}`;
             }
             livesSpan.textContent = displayText;
         }
@@ -1768,17 +1764,20 @@
         }
 
         function getIntervalByScore(sc) {
-            const base = 135;
-            const step = Math.floor(sc / 4) * 10;
-            return Math.max(60, base - step);
+            // Yavaş başlangıç ve kademeli hızlanma
+            const base = 200; // Başlangıç hızı daha yavaş (200ms)
+            // Her 8 puanda 5ms azalt (daha yavaş hızlanma)
+            const step = Math.floor(sc / 8) * 5;
+            // Minimum 80ms'ye kadar düşebilir (daha yavaş maksimum hız)
+            return Math.max(80, base - step);
         }
 
         function updateSpeedUI() {
             const interval = getIntervalByScore(score);
-            const relative = 135 - interval;
-            if (relative <= 5) {
+            const relative = 200 - interval; // Base değer 200'e güncellendi
+            if (relative <= 10) {
                 speedLabel.textContent = "Normal";
-            } else if (relative <= 30) {
+            } else if (relative <= 60) {
                 speedLabel.textContent = "Hızlı";
             } else {
                 speedLabel.textContent = "Çılgın";
@@ -2124,10 +2123,16 @@
             for (let i = temporaryLifeItems.length - 1; i >= 0; i--) {
                 const tempLife = temporaryLifeItems[i];
                 if (tempLife.position.x === headPos.x && tempLife.position.y === headPos.y) {
-                    // Süreli can toplandı
-                    activeTemporaryLives.push(1);
-                    temporaryLifeItems.splice(i, 1);
-                    updateLivesDisplay();
+                    // Süreli can toplandı - maksimum 3 can kontrolü
+                    const totalLives = lives + activeTemporaryLives.length;
+                    if (totalLives < 3) {
+                        activeTemporaryLives.push(1);
+                        temporaryLifeItems.splice(i, 1);
+                        updateLivesDisplay();
+                    } else {
+                        // Maksimum can sayısına ulaşıldı, süreli can öğesini kaldır
+                        temporaryLifeItems.splice(i, 1);
+                    }
                 }
             }
 
@@ -2148,7 +2153,8 @@
 
                 // Her 10 puan kazanınca can kazan
                 if (score > 0 && score % 10 === 0 && score !== lastScoreForLife) {
-                    if (lives < 3) { // Maksimum 3 can
+                    const totalLives = lives + activeTemporaryLives.length;
+                    if (totalLives < 3) { // Maksimum 3 can (toplam)
                         lives++;
                         updateLivesDisplay();
                     }

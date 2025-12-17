@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+.venv/
+
+# VS Code
+.vscode/
+
+# Pyright
+pyrightconfig.json
+
+# SQLite
+db.sqlite3
