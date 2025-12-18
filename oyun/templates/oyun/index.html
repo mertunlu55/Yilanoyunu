@@ -2832,9 +2832,9 @@
                 head.x < 0 || head.x >= tileCount ||
                 head.y < 0 || head.y >= tileCount
             ) {
-                // Duvarlı modda duvardan çarpınca oyun biter
+                // Duvarlı modda duvardan çarpınca can sistemi devreye girer
                 if (gameMode === "duvarlı") {
-                    return endGame();
+                    return handleCollision();
                 }
                 // Klasik, hızlı ve random modda duvardan geçer (wrap around)
                 if (head.x < 0) head.x = tileCount - 1;
