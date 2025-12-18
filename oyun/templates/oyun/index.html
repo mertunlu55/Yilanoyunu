@@ -1281,6 +1281,13 @@
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Rastgele engeller ve duvar blokları</div>
                     </label>
                 </div>
+                <div class="control-option" data-mode="buyuk">
+                    <input type="radio" name="gamemode" id="mode-buyuk" value="buyuk">
+                    <label for="mode-buyuk" class="control-option-label">
+                        <div>Büyük Harita</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Geniş harita, çoklu elma ve rastgele engeller</div>
+                    </label>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -1479,7 +1486,6 @@
                     </div>
                     <div class="hud-center">
                         <button class="btn-settings" id="btn-settings">⚙️ Ayarlar</button>
-                        <button class="btn-settings" id="btn-fullscreen" title="Tam Ekran">⛶ Tam Ekran</button>
                     </div>
                     <div class="hud-right">
                         <div class="pill high-pill">
@@ -1640,8 +1646,8 @@
         let controlScheme = localStorage.getItem("snakeControlScheme") || "arrows"; // "arrows" veya "wasd"
         
         // ========== GAME MODE SYSTEM ==========
-        let gameMode = localStorage.getItem("snakeGameMode") || "klasik"; // "klasik", "duvarlı", "hızlı", "random"
-        let obstacles = []; // Random harita modu için engeller
+        let gameMode = localStorage.getItem("snakeGameMode") || "klasik"; // "klasik", "duvarlı", "hızlı", "random", "buyuk"
+        let obstacles = []; // Random harita ve Büyük harita modu için engeller
 
         function updateControlInfo() {
             const controlInfo = document.getElementById("control-info");
@@ -2051,6 +2057,10 @@
             if (selectedMode) {
                 gameMode = selectedMode.value;
                 localStorage.setItem("snakeGameMode", gameMode);
+                // Mod değiştiğinde canvas boyutunu güncelle
+                if (typeof resizeCanvas === 'function') {
+                    resizeCanvas();
+                }
             }
             // Tema seçeneğini kaydet ve uygula
             const selectedTheme = document.querySelector('input[name="theme"]:checked');
@@ -2078,6 +2088,10 @@
             if (selectedMode) {
                 gameMode = selectedMode.value;
                 localStorage.setItem("snakeGameMode", gameMode);
+                // Mod değiştiğinde canvas boyutunu güncelle
+                if (typeof resizeCanvas === 'function') {
+                    resizeCanvas();
+                }
             }
             // Tema seçeneğini kaydet ve uygula
             const selectedTheme = document.querySelector('input[name="theme"]:checked');
@@ -2191,15 +2205,44 @@
         const lbBody = document.getElementById("leaderboard-body");
         const lbEmpty = document.getElementById("leaderboard-empty");
 
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
+        let gridSize = 20;
+        let tileCount = 20; // canvas.width / gridSize - dinamik olacak
+        
+        // Canvas boyutunu ayarla
+        function resizeCanvas() {
+            if (gameMode === "buyuk") {
+                // Büyük harita modu: ekrana göre dinamik
+                const maxWidth = Math.min(window.innerWidth * 0.9, 800);
+                const maxHeight = Math.min(window.innerHeight * 0.85, 800);
+                const size = Math.min(maxWidth, maxHeight);
+                canvas.width = size;
+                canvas.height = size;
+                canvas.classList.add("mode-buyuk");
+                tileCount = Math.floor(size / gridSize);
+            } else {
+                // Normal mod: sabit 400x400
+                canvas.width = 400;
+                canvas.height = 400;
+                canvas.classList.remove("mode-buyuk");
+                tileCount = 20;
+            }
+        }
+        
+        // İlk boyutlandırma
+        resizeCanvas();
+        
+        // Pencere boyutu değiştiğinde yeniden boyutlandır
+        window.addEventListener("resize", () => {
+            if (gameMode === "buyuk") {
+                resizeCanvas();
+            }
+        });
 
         let snake;
         let vx;
         let vy;
         let food; // Normal mod için tek elma
-        let foods = []; // Tam ekran modu için çoklu elma
-        let isFullscreen = false;
+        let foods = []; // Büyük harita modu için çoklu elma
         let score;
         let level;
         let paused = false;
@@ -2292,17 +2335,18 @@
         
         function generateObstacles() {
             obstacles = [];
-            if (gameMode !== "random") return;
+            if (gameMode !== "random" && gameMode !== "buyuk") return;
             
             // Yılanın başlangıç konumu
             const startPositions = [
-                {x: 10, y: 10},
-                {x: 9, y: 10},
-                {x: 8, y: 10}
+                {x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2)},
+                {x: Math.floor(tileCount / 2) - 1, y: Math.floor(tileCount / 2)},
+                {x: Math.floor(tileCount / 2) - 2, y: Math.floor(tileCount / 2)}
             ];
             
-            // Toplam engel sayısı (harita boyutuna göre)
-            const obstacleCount = Math.floor((tileCount * tileCount) * 0.15); // %15 engel
+            // Engel sayısı: Random modda %15, Büyük harita modunda %8 (daha az engel)
+            const obstaclePercent = gameMode === "buyuk" ? 0.08 : 0.15;
+            const obstacleCount = Math.floor((tileCount * tileCount) * obstaclePercent);
             
             for (let i = 0; i < obstacleCount; i++) {
                 let position;
@@ -2349,10 +2393,16 @@
         }
 
         function resetGame() {
+            // Canvas boyutunu ayarla
+            resizeCanvas();
+            
+            // Yılanın başlangıç konumu (harita boyutuna göre)
+            const startX = Math.floor(tileCount / 2);
+            const startY = Math.floor(tileCount / 2);
             snake = [
-                {x: 10, y: 10},
-                {x: 9,  y: 10},
-                {x: 8,  y: 10},
+                {x: startX, y: startY},
+                {x: startX - 1,  y: startY},
+                {x: startX - 2,  y: startY},
             ];
             vx = 1;
             vy = 0;
@@ -2361,8 +2411,8 @@
             generateObstacles();
             
             // Yem oluştur
-            if (isFullscreen) {
-                // Tam ekran modunda 5-7 elma oluştur
+            if (gameMode === "buyuk") {
+                // Büyük harita modunda 5-7 elma oluştur
                 foods = [];
                 const foodCount = 5 + Math.floor(Math.random() * 3); // 5-7 arası
                 for (let i = 0; i < foodCount; i++) {
@@ -2500,8 +2550,8 @@
                 ctx.stroke();
             }
             
-            // Random harita modunda engelleri çiz
-            if (gameMode === "random" && obstacles.length > 0) {
+            // Random harita ve Büyük harita modunda engelleri çiz
+            if ((gameMode === "random" || gameMode === "buyuk") && obstacles.length > 0) {
                 ctx.fillStyle = obstacleColor;
                 ctx.strokeStyle = obstacleStrokeColor;
                 ctx.lineWidth = 2;
@@ -2632,14 +2682,14 @@
 
         function drawFood() {
             // Normal modda tek elma çiz
-            if (!isFullscreen && food) {
+            if (gameMode !== "buyuk" && food) {
                 drawSingleFood(food.x, food.y);
             }
         }
         
         function drawFoods() {
-            // Tam ekran modunda tüm elmaları çiz
-            if (isFullscreen && foods.length > 0) {
+            // Büyük harita modunda tüm elmaları çiz
+            if (gameMode === "buyuk" && foods.length > 0) {
                 foods.forEach(f => {
                     drawSingleFood(f.x, f.y);
                 });
@@ -2776,8 +2826,8 @@
         }
 
         function draw() {
-            // Snake kontrolü ve food kontrolü (tam ekran modunda foods, normal modda food)
-            const hasFood = isFullscreen ? (foods && foods.length > 0) : food;
+            // Snake kontrolü ve food kontrolü (büyük harita modunda foods, normal modda food)
+            const hasFood = gameMode === "buyuk" ? (foods && foods.length > 0) : food;
             if (!snake || !hasFood) {
                 drawBoard();
                 return;
@@ -2820,8 +2870,8 @@
         }
 
         function tick() {
-            // Tam ekran modunda foods kontrolü, normal modda food kontrolü
-            const hasFood = isFullscreen ? (foods && foods.length > 0) : food;
+            // Büyük harita modunda foods kontrolü, normal modda food kontrolü
+            const hasFood = gameMode === "buyuk" ? (foods && foods.length > 0) : food;
             if (paused || gameOver || !snake || !hasFood) {
                 draw();
                 return;
@@ -2863,7 +2913,7 @@
                     };
                     // Yılan, yem veya engel ile çakışmasın
                     const checkFoodCollision = (pos) => {
-                        if (isFullscreen) {
+                        if (gameMode === "buyuk") {
                             return foods.some(f => f.x === pos.x && f.y === pos.y);
                         } else {
                             return food && food.x === pos.x && food.y === pos.y;
@@ -2903,8 +2953,8 @@
                 if (head.y >= tileCount) head.y = 0;
             }
             
-            // Random harita modunda engellere çarpma kontrolü
-            if (gameMode === "random" && obstacles.length > 0) {
+            // Random harita ve Büyük harita modunda engellere çarpma kontrolü
+            if ((gameMode === "random" || gameMode === "buyuk") && obstacles.length > 0) {
                 for (const obstacle of obstacles) {
                     if (head.x === obstacle.x && head.y === obstacle.y) {
                         return handleCollision();
@@ -2947,8 +2997,8 @@
             // Elma yeme kontrolü
             let foodEaten = false;
             
-            if (isFullscreen) {
-                // Tam ekran modunda: foods array'inde kontrol et
+            if (gameMode === "buyuk") {
+                // Büyük harita modunda: foods array'inde kontrol et
                 for (let i = foods.length - 1; i >= 0; i--) {
                     const f = foods[i];
                     if (head.x === f.x && head.y === f.y) {
@@ -3354,54 +3404,6 @@
 
         btnRestart.addEventListener("click", () => {
             resetGame();
-        });
-        
-        // Tam ekran modu
-        const btnFullscreen = document.getElementById("btn-fullscreen");
-        if (btnFullscreen) {
-            btnFullscreen.addEventListener("click", () => {
-                toggleFullscreen();
-            });
-        }
-        
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                // Tam ekrana geç
-                const gameLayout = document.getElementById("game-layout");
-                if (gameLayout && gameLayout.requestFullscreen) {
-                    gameLayout.requestFullscreen().then(() => {
-                        isFullscreen = true;
-                        btnFullscreen.textContent = "⛶ Çıkış";
-                        resetGame(); // Oyunu yeniden başlat (çoklu elma için)
-                    }).catch(err => {
-                        console.error("Tam ekran hatası:", err);
-                    });
-                }
-            } else {
-                // Tam ekrandan çık
-                if (document.exitFullscreen) {
-                    document.exitFullscreen().then(() => {
-                        isFullscreen = false;
-                        if (btnFullscreen) {
-                            btnFullscreen.textContent = "⛶ Tam Ekran";
-                        }
-                        resetGame(); // Oyunu yeniden başlat (tek elma için)
-                    }).catch(err => {
-                        console.error("Tam ekran çıkış hatası:", err);
-                    });
-                }
-            }
-        }
-        
-        // Tam ekran değişikliklerini dinle
-        document.addEventListener("fullscreenchange", () => {
-            if (!document.fullscreenElement) {
-                isFullscreen = false;
-                if (btnFullscreen) {
-                    btnFullscreen.textContent = "⛶ Tam Ekran";
-                }
-                resetGame();
-            }
         });
 
         const btnMenu = document.getElementById("btn-menu");
