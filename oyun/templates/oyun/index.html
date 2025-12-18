@@ -3288,6 +3288,11 @@
 
         // ---- Kontroller ----
         function handleMovement(key) {
+            // key undefined veya null ise işlem yapma
+            if (!key) {
+                return;
+            }
+
             if (controlScheme === "wasd") {
                 if ((key === "w" || key === "W") && vy !== 1) {
                     vx = 0; vy = -1;
@@ -3331,13 +3336,19 @@
                 return;
             }
 
+            // e.key undefined olabilir, kontrol et
+            if (!e.key) {
+                return;
+            }
+
             // Hareket kontrolleri
             handleMovement(e.key);
 
             // Diğer kontroller
-            if (e.key.toLowerCase() === "r") {
+            const keyLower = e.key.toLowerCase();
+            if (keyLower === "r") {
                 resetGame();
-            } else if (e.key.toLowerCase() === "p") {
+            } else if (keyLower === "p") {
                 if (gameOver) return;
                 paused = !paused;
             }
