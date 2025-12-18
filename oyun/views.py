@@ -7,7 +7,12 @@ from .models import Player, Score
 
 
 def index(request):
-    return render(request, "oyun/index.html")
+    response = render(request, "oyun/index.html")
+    # Mobil cache sorununu önlemek için no-cache header'ları ekle
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 @csrf_exempt
