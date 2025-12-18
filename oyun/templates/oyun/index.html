@@ -30,6 +30,7 @@
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         body::before {
@@ -43,6 +44,244 @@
             opacity: 1;
             pointer-events: none;
             z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+
+        /* NEON THEME (Varsayılan - Mevcut Tema) */
+        /* Mevcut stil zaten neon, değişiklik yok - body.theme-neon için özel CSS gerekmez */
+
+        /* RETRO THEME */
+        body.theme-retro {
+            background: #1a1a2e;
+            color: #eaeaea;
+        }
+
+        body.theme-retro::before {
+            opacity: 0;
+        }
+
+        body.theme-retro #game-wrapper {
+            background: #16213e;
+            border-radius: 0;
+            box-shadow: 
+                0 0 0 2px #0f3460,
+                0 0 0 4px #16213e,
+                inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        body.theme-retro #game-card {
+            background: #0f3460;
+            border-radius: 0;
+            box-shadow: 
+                inset 0 0 0 1px #533483,
+                0 0 0 2px #0f3460;
+        }
+
+        body.theme-retro canvas {
+            background: #0f1419;
+            border-radius: 0;
+            border: 2px solid #533483;
+            box-shadow: 
+                0 0 0 1px #e94560,
+                inset 0 0 10px rgba(233,69,96,0.2);
+        }
+
+        body.theme-retro .pill {
+            background: rgba(83,52,131,0.3);
+            border-color: #533483;
+            border-radius: 0;
+        }
+
+        body.theme-retro .score-pill {
+            background: rgba(233,69,96,0.2);
+            border-color: #e94560;
+        }
+
+        body.theme-retro .level-pill {
+            background: rgba(83,52,131,0.3);
+            border-color: #533483;
+        }
+
+        body.theme-retro .high-pill {
+            background: rgba(255,193,7,0.2);
+            border-color: #ffc107;
+        }
+
+        body.theme-retro .speed-pill {
+            background: rgba(233,69,96,0.2);
+            border-color: #e94560;
+        }
+
+        body.theme-retro .auth-card,
+        body.theme-retro .settings-card {
+            background: #16213e;
+            border-radius: 0;
+            box-shadow: 
+                0 0 0 2px #0f3460,
+                0 0 0 4px #533483,
+                inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        body.theme-retro .form-input,
+        body.theme-retro .control-option {
+            background: #0f3460;
+            border-color: #533483;
+            border-radius: 0;
+        }
+
+        body.theme-retro .control-option:hover {
+            background: #16213e;
+            border-color: #e94560;
+        }
+
+        body.theme-retro .control-option.selected {
+            background: rgba(233,69,96,0.2);
+            border-color: #e94560;
+        }
+
+        body.theme-retro .auth-button,
+        body.theme-retro .settings-button {
+            background: linear-gradient(135deg, #e94560, #c73650);
+            border-radius: 0;
+            box-shadow: 0 2px 0 #8b2638;
+        }
+
+        body.theme-retro .auth-button:hover,
+        body.theme-retro .settings-button:hover {
+            box-shadow: 0 3px 0 #8b2638;
+            transform: translateY(-1px);
+        }
+
+        body.theme-retro .logo-icon {
+            filter: drop-shadow(0 0 2px rgba(233,69,96,0.8));
+        }
+
+        /* MINIMAL THEME */
+        body.theme-minimal {
+            background: #ffffff;
+            color: #1f2937;
+        }
+
+        body.theme-minimal::before {
+            opacity: 0;
+        }
+
+        body.theme-minimal #game-wrapper {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 18px 18px 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        body.theme-minimal #game-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 14px 16px 12px;
+            box-shadow: none;
+            border: 1px solid #e5e7eb;
+        }
+
+        body.theme-minimal canvas {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            box-shadow: none;
+        }
+
+        body.theme-minimal .pill {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            color: #1f2937;
+        }
+
+        body.theme-minimal .score-pill {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #059669;
+        }
+
+        body.theme-minimal .level-pill {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #2563eb;
+        }
+
+        body.theme-minimal .high-pill {
+            background: #fffbeb;
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+
+        body.theme-minimal .speed-pill {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        body.theme-minimal .auth-card,
+        body.theme-minimal .settings-card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        body.theme-minimal .form-input,
+        body.theme-minimal .control-option {
+            background: #ffffff;
+            border-color: #d1d5db;
+            color: #1f2937;
+        }
+
+        body.theme-minimal .form-label,
+        body.theme-minimal .settings-section-title {
+            color: #6b7280;
+        }
+
+        body.theme-minimal .control-option:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        body.theme-minimal .control-option.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        body.theme-minimal .auth-button,
+        body.theme-minimal .settings-button {
+            background: #3b82f6;
+            color: white;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+
+        body.theme-minimal .auth-button:hover,
+        body.theme-minimal .settings-button:hover {
+            background: #2563eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        body.theme-minimal .auth-button.secondary,
+        body.theme-minimal .settings-button.secondary {
+            background: #ffffff;
+            border-color: #d1d5db;
+            color: #1f2937;
+        }
+
+        body.theme-minimal .auth-button.secondary:hover,
+        body.theme-minimal .settings-button.secondary:hover {
+            background: #f9fafb;
+        }
+
+        body.theme-minimal .subtitle,
+        body.theme-minimal .text-muted {
+            color: #6b7280;
+        }
+
+        body.theme-minimal .logo-icon {
+            filter: none;
         }
 
         h1 {
@@ -1033,6 +1272,31 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <div class="settings-section-title">Tema</div>
+                <div class="control-option" data-theme="neon">
+                    <input type="radio" name="theme" id="theme-neon" value="neon" checked>
+                    <label for="theme-neon" class="control-option-label">
+                        <div>Neon</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Parlak renkler ve neon efektleri</div>
+                    </label>
+                </div>
+                <div class="control-option" data-theme="retro">
+                    <input type="radio" name="theme" id="theme-retro" value="retro">
+                    <label for="theme-retro" class="control-option-label">
+                        <div>Retro</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Pixel/Arcade tarzı görünüm</div>
+                    </label>
+                </div>
+                <div class="control-option" data-theme="minimal">
+                    <input type="radio" name="theme" id="theme-minimal" value="minimal">
+                    <label for="theme-minimal" class="control-option-label">
+                        <div>Minimal</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sade ve düz tasarım</div>
+                    </label>
+                </div>
+            </div>
+
             <div class="button-group">
                 <button type="button" class="settings-button" id="btn-settings-close">Kaydet ve Kapat</button>
                 <button type="button" class="settings-button secondary" id="btn-settings-menu">Menüye Dön</button>
@@ -1250,6 +1514,21 @@
         let guestMode = false;
         let currentScreen = "login"; // login, signup, menu, scores, game, settings
 
+        // ========== THEME SYSTEM ==========
+        let currentTheme = localStorage.getItem("snake_theme") || "neon"; // "neon", "retro", "minimal"
+        
+        function applyTheme(theme) {
+            // Tüm tema class'larını kaldır
+            document.body.classList.remove("theme-neon", "theme-retro", "theme-minimal");
+            // Yeni temayı ekle
+            document.body.classList.add(`theme-${theme}`);
+            currentTheme = theme;
+            localStorage.setItem("snake_theme", theme);
+        }
+        
+        // Sayfa yüklendiğinde temayı uygula
+        applyTheme(currentTheme);
+
         // ========== CONTROL SYSTEM ==========
         let controlScheme = localStorage.getItem("snakeControlScheme") || "arrows"; // "arrows" veya "wasd"
         
@@ -1340,6 +1619,19 @@
                     option.checked = true;
                     const modeDiv = document.querySelector(`[data-mode="${gameMode}"]`);
                     if (modeDiv) modeDiv.classList.add("selected");
+                }
+            });
+            
+            // Tema seçeneğini güncelle
+            const themeOptions = document.querySelectorAll('input[name="theme"]');
+            const themeDivs = document.querySelectorAll('[data-theme]');
+            themeDivs.forEach(div => div.classList.remove("selected"));
+            
+            themeOptions.forEach(option => {
+                if (option.value === currentTheme) {
+                    option.checked = true;
+                    const themeDiv = document.querySelector(`[data-theme="${currentTheme}"]`);
+                    if (themeDiv) themeDiv.classList.add("selected");
                 }
             });
         }
@@ -1645,6 +1937,11 @@
                 gameMode = selectedMode.value;
                 localStorage.setItem("snakeGameMode", gameMode);
             }
+            // Tema seçeneğini kaydet ve uygula
+            const selectedTheme = document.querySelector('input[name="theme"]:checked');
+            if (selectedTheme) {
+                applyTheme(selectedTheme.value);
+            }
             showScreen("game");
         });
 
@@ -1661,6 +1958,11 @@
             if (selectedMode) {
                 gameMode = selectedMode.value;
                 localStorage.setItem("snakeGameMode", gameMode);
+            }
+            // Tema seçeneğini kaydet ve uygula
+            const selectedTheme = document.querySelector('input[name="theme"]:checked');
+            if (selectedTheme) {
+                applyTheme(selectedTheme.value);
             }
             showScreen("menu");
         });
@@ -1688,6 +1990,21 @@
                 if (selectedDiv) {
                     selectedDiv.classList.add("selected");
                 }
+            });
+        });
+        
+        // Tema seçeneklerini değiştir
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.addEventListener("change", () => {
+                document.querySelectorAll('[data-theme]').forEach(opt => {
+                    opt.classList.remove("selected");
+                });
+                const selectedDiv = document.querySelector(`[data-theme="${radio.value}"]`);
+                if (selectedDiv) {
+                    selectedDiv.classList.add("selected");
+                }
+                // Tema değiştiğinde anında uygula (önizleme için)
+                applyTheme(radio.value);
             });
         });
 
@@ -1931,16 +2248,41 @@
 
         function drawBoard() {
             const tile = gridSize;
+            
+            // Tema bazlı renkler
+            let gridColor1, gridColor2, gridLineColor, obstacleColor, obstacleStrokeColor;
+            
+            if (currentTheme === "retro") {
+                gridColor1 = "#0a1628";
+                gridColor2 = "#0f1e35";
+                gridLineColor = "rgba(83, 52, 131, 0.3)";
+                obstacleColor = "rgba(233, 69, 96, 0.5)";
+                obstacleStrokeColor = "rgba(233, 69, 96, 0.8)";
+            } else if (currentTheme === "minimal") {
+                gridColor1 = "#f9fafb";
+                gridColor2 = "#ffffff";
+                gridLineColor = "rgba(209, 213, 219, 0.5)";
+                obstacleColor = "rgba(107, 114, 128, 0.3)";
+                obstacleStrokeColor = "rgba(107, 114, 128, 0.6)";
+            } else {
+                // Neon (varsayılan)
+                gridColor1 = "#11301a";
+                gridColor2 = "#17361f";
+                gridLineColor = "rgba(34,197,94,0.18)";
+                obstacleColor = "rgba(148, 163, 184, 0.4)";
+                obstacleStrokeColor = "rgba(148, 163, 184, 0.6)";
+            }
+            
             for (let x = 0; x < tileCount; x++) {
                 for (let y = 0; y < tileCount; y++) {
                     const even = (x + y) % 2 === 0;
-                    const base = even ? "#11301a" : "#17361f";
+                    const base = even ? gridColor1 : gridColor2;
                     ctx.fillStyle = base;
                     ctx.fillRect(x * tile, y * tile, tile, tile);
                 }
             }
 
-            ctx.strokeStyle = "rgba(34,197,94,0.18)";
+            ctx.strokeStyle = gridLineColor;
             ctx.lineWidth = 1;
             for (let i = 0; i <= tileCount; i++) {
                 ctx.beginPath();
@@ -1956,27 +2298,31 @@
             
             // Random harita modunda engelleri çiz
             if (gameMode === "random" && obstacles.length > 0) {
-                ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
-                ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+                ctx.fillStyle = obstacleColor;
+                ctx.strokeStyle = obstacleStrokeColor;
                 ctx.lineWidth = 2;
                 
                 for (const obstacle of obstacles) {
                     const ox = obstacle.x * gridSize;
                     const oy = obstacle.y * gridSize;
                     
-                    // Engeli çiz (koyu gri blok)
+                    // Engeli çiz
                     ctx.fillRect(ox + 2, oy + 2, gridSize - 4, gridSize - 4);
                     ctx.strokeRect(ox + 2, oy + 2, gridSize - 4, gridSize - 4);
                     
-                    // İç çizgi efekti
-                    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
-                    ctx.beginPath();
-                    ctx.moveTo(ox + 4, oy + 4);
-                    ctx.lineTo(ox + gridSize - 4, oy + gridSize - 4);
-                    ctx.moveTo(ox + gridSize - 4, oy + 4);
-                    ctx.lineTo(ox + 4, oy + gridSize - 4);
-                    ctx.stroke();
-                    ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+                    // İç çizgi efekti (sadece neon ve retro temalarda)
+                    if (currentTheme !== "minimal") {
+                        ctx.strokeStyle = currentTheme === "retro" 
+                            ? "rgba(233, 69, 96, 0.3)" 
+                            : "rgba(148, 163, 184, 0.3)";
+                        ctx.beginPath();
+                        ctx.moveTo(ox + 4, oy + 4);
+                        ctx.lineTo(ox + gridSize - 4, oy + gridSize - 4);
+                        ctx.moveTo(ox + gridSize - 4, oy + 4);
+                        ctx.lineTo(ox + 4, oy + gridSize - 4);
+                        ctx.stroke();
+                        ctx.strokeStyle = obstacleStrokeColor;
+                    }
                 }
             }
         }
@@ -2017,10 +2363,30 @@
         }
 
         function drawSnake() {
-            const snakeColor = colorFromLevel(level);
-            const glowColor = snakeColor.replace("60%", "70%");
+            let snakeColor = colorFromLevel(level);
+            let glowColor = snakeColor.replace("60%", "70%");
+            let eyeColor = "#f9fafb";
+            let eyePupilColor = "#020617";
+            let borderRadius = 6;
+            let shadowBlur = 12;
+            
+            // Tema bazlı ayarlar
+            if (currentTheme === "retro") {
+                // Retro tema: Daha pixel görünüm, daha az glow
+                shadowBlur = 4;
+                borderRadius = 0; // Pixel görünüm için köşeler keskin
+                eyeColor = "#ffffff";
+                eyePupilColor = "#0f1419";
+            } else if (currentTheme === "minimal") {
+                // Minimal tema: Glow yok, düz renkler
+                shadowBlur = 0;
+                borderRadius = 4;
+                eyeColor = "#ffffff";
+                eyePupilColor = "#1f2937";
+            }
+            
             ctx.shadowColor = glowColor;
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = shadowBlur;
             ctx.fillStyle = snakeColor;
 
             for (let i = snake.length - 1; i >= 0; i--) {
@@ -2032,7 +2398,7 @@
                 const alpha = 0.35 + (i === 0 ? 0.65 : Math.max(0, 1 - i * 0.07));
                 ctx.fillStyle = snakeColor.replace("60%", `${60 + i * 1}%`).replace("hsl", `hsla`).replace(")", `,${alpha})`);
                 ctx.beginPath();
-                ctx.roundRect(px, py, size, size, 6);
+                ctx.roundRect(px, py, size, size, borderRadius);
                 ctx.fill();
             }
 
@@ -2047,13 +2413,13 @@
             const offsetX = (dx * 4);
             const offsetY = (dy * 4);
 
-            ctx.fillStyle = "#f9fafb";
+            ctx.fillStyle = eyeColor;
             ctx.beginPath();
             ctx.arc(hx - 3 + offsetX, hy - 3 + offsetY, 3, 0, Math.PI * 2);
             ctx.arc(hx + 3 + offsetX, hy - 3 + offsetY, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = "#020617";
+            ctx.fillStyle = eyePupilColor;
             ctx.beginPath();
             ctx.arc(hx - 3 + offsetX, hy - 3 + offsetY, 1.4, 0, Math.PI * 2);
             ctx.arc(hx + 3 + offsetX, hy - 3 + offsetY, 1.4, 0, Math.PI * 2);
@@ -2064,32 +2430,63 @@
             const cx = food.x * gridSize + gridSize / 2;
             const cy = food.y * gridSize + gridSize / 2;
 
-            const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, gridSize / 1.3);
-            gradient.addColorStop(0, "rgba(248,113,113,0.9)");
-            gradient.addColorStop(1, "rgba(248,113,113,0)");
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(cx, cy, gridSize / 1.3, 0, Math.PI * 2);
-            ctx.fill();
+            // Tema bazlı renkler
+            let foodColor, glowColor, highlightColor, stemColor, leafColor;
+            
+            if (currentTheme === "retro") {
+                foodColor = "#e94560";
+                glowColor = "rgba(233,69,96,0.6)";
+                highlightColor = "rgba(255,255,255,0.9)";
+                stemColor = "#ffc107";
+                leafColor = "#ffc107";
+            } else if (currentTheme === "minimal") {
+                foodColor = "#ef4444";
+                glowColor = "rgba(239,68,68,0.2)";
+                highlightColor = "rgba(254,242,242,0.9)";
+                stemColor = "#10b981";
+                leafColor = "#10b981";
+            } else {
+                // Neon (varsayılan)
+                foodColor = "#f97373";
+                glowColor = "rgba(248,113,113,0.9)";
+                highlightColor = "rgba(254,242,242,0.9)";
+                stemColor = "#16a34a";
+                leafColor = "#22c55e";
+            }
 
-            ctx.fillStyle = "#f97373";
+            // Glow efekti (sadece neon ve retro temalarda)
+            if (currentTheme !== "minimal") {
+                const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, gridSize / 1.3);
+                gradient.addColorStop(0, glowColor);
+                gradient.addColorStop(1, glowColor.replace("0.9", "0").replace("0.6", "0"));
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(cx, cy, gridSize / 1.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Ana yem
+            ctx.fillStyle = foodColor;
             ctx.beginPath();
             ctx.arc(cx, cy, gridSize / 2.3, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = "rgba(254,242,242,0.9)";
+            // Highlight
+            ctx.fillStyle = highlightColor;
             ctx.beginPath();
             ctx.arc(cx - 4, cy - 4, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = "#16a34a";
+            // Sap
+            ctx.strokeStyle = stemColor;
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(cx, cy - gridSize / 2.3);
             ctx.lineTo(cx + 3, cy - gridSize / 1.8);
             ctx.stroke();
 
-            ctx.fillStyle = "#22c55e";
+            // Yaprak
+            ctx.fillStyle = leafColor;
             ctx.beginPath();
             ctx.ellipse(cx + 5, cy - gridSize / 2.2, 4, 6, -0.4, 0, Math.PI * 2);
             ctx.fill();
