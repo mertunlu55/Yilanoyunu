@@ -1486,7 +1486,6 @@
                     </div>
                     <div class="hud-center">
                         <button class="btn-settings" id="btn-settings">⚙️ Ayarlar</button>
-                        <button class="btn-settings" id="btn-fullscreen-toggle" title="Tam Ekrana Geç">⛶ Tam Ekran</button>
                     </div>
                     <div class="hud-right">
                         <div class="pill high-pill">
@@ -2057,14 +2056,24 @@
             // Oyun modu seçeneğini kaydet
             const selectedMode = document.querySelector('input[name="gamemode"]:checked');
             if (selectedMode) {
-                gameMode = selectedMode.value;
+                const newMode = selectedMode.value;
+                
+                // Eğer tam ekran modundan başka moda geçiliyorsa önce fullscreen'den çık
+                if (gameMode === "fullscreen" && newMode !== "fullscreen" && isFullscreenActive) {
+                    exitFullscreen();
+                }
+                
+                gameMode = newMode;
                 localStorage.setItem("snakeGameMode", gameMode);
                 
                 // Tam ekran modu seçildiyse fullscreen'e geç
                 if (gameMode === "fullscreen" && !isFullscreenActive) {
-                    enterFullscreen();
-                } else if (gameMode !== "fullscreen" && isFullscreenActive) {
-                    exitFullscreen();
+                    // Ayarlar ekranını kapat ve oyun ekranına geç
+                    showScreen("game");
+                    // Kısa bir gecikme ile fullscreen'e geç (UI güncellemesi için)
+                    setTimeout(() => {
+                        enterFullscreen();
+                    }, 300);
                 }
             }
             // Tema seçeneğini kaydet ve uygula
@@ -2091,14 +2100,24 @@
             // Oyun modu seçeneğini kaydet
             const selectedMode = document.querySelector('input[name="gamemode"]:checked');
             if (selectedMode) {
-                gameMode = selectedMode.value;
+                const newMode = selectedMode.value;
+                
+                // Eğer tam ekran modundan başka moda geçiliyorsa önce fullscreen'den çık
+                if (gameMode === "fullscreen" && newMode !== "fullscreen" && isFullscreenActive) {
+                    exitFullscreen();
+                }
+                
+                gameMode = newMode;
                 localStorage.setItem("snakeGameMode", gameMode);
                 
                 // Tam ekran modu seçildiyse fullscreen'e geç
                 if (gameMode === "fullscreen" && !isFullscreenActive) {
-                    enterFullscreen();
-                } else if (gameMode !== "fullscreen" && isFullscreenActive) {
-                    exitFullscreen();
+                    // Ayarlar ekranını kapat ve oyun ekranına geç
+                    showScreen("game");
+                    // Kısa bir gecikme ile fullscreen'e geç (UI güncellemesi için)
+                    setTimeout(() => {
+                        enterFullscreen();
+                    }, 300);
                 }
             }
             // Tema seçeneğini kaydet ve uygula
@@ -2222,7 +2241,8 @@
                 // Tam ekran modunda: ekran boyutuna göre
                 const width = window.innerWidth;
                 const height = window.innerHeight;
-                const size = Math.min(width, height) * 0.9; // Ekranın %90'ı
+                // Canvas'ı ekranın %95'i kadar yap, kare şeklinde
+                const size = Math.min(width, height) * 0.95;
                 canvas.width = size;
                 canvas.height = size;
                 tileCount = Math.floor(size / gridSize);
@@ -2236,6 +2256,13 @@
         
         // İlk boyutlandırma
         resizeCanvasForFullscreen();
+        
+        // Pencere boyutu değiştiğinde canvas'ı yeniden boyutlandır
+        window.addEventListener("resize", () => {
+            if (gameMode === "fullscreen" && isFullscreenActive) {
+                resizeCanvasForFullscreen();
+            }
+        });
 
         let snake;
         let vx;
@@ -3407,56 +3434,45 @@
             resetGame();
         });
         
-        // Tam ekran toggle butonu
-        const btnFullscreenToggle = document.getElementById("btn-fullscreen-toggle");
-        if (btnFullscreenToggle) {
-            btnFullscreenToggle.addEventListener("click", () => {
-                if (gameMode === "fullscreen") {
-                    // Tam ekran modundaysa fullscreen'e geç/çık
-                    if (isFullscreenActive) {
-                        exitFullscreen();
-                    } else {
-                        enterFullscreen();
-                    }
-                } else {
-                    // Tam ekran modu değilse modu değiştir
-                    const fullscreenRadio = document.getElementById("mode-fullscreen");
-                    if (fullscreenRadio) {
-                        fullscreenRadio.checked = true;
-                        gameMode = "fullscreen";
-                        localStorage.setItem("snakeGameMode", gameMode);
-                        enterFullscreen();
-                    }
-                }
-            });
-        }
-        
         // Tam ekrana geç
         function enterFullscreen() {
             const gameLayout = document.getElementById("game-layout");
-            if (gameLayout && gameLayout.requestFullscreen) {
-                gameLayout.requestFullscreen().then(() => {
-                    isFullscreenActive = true;
-                    resizeCanvasForFullscreen();
-                    if (btnFullscreenToggle) {
-                        btnFullscreenToggle.textContent = "⛶ Çıkış";
-                    }
-                    resetGame(); // Oyunu yeniden başlat (çoklu elma için)
-                }).catch(err => {
-                    console.error("Tam ekran hatası:", err);
-                });
+            if (gameLayout) {
+                // Farklı browser'lar için fullscreen API
+                const requestFullscreen = gameLayout.requestFullscreen || 
+                                         gameLayout.webkitRequestFullscreen || 
+                                         gameLayout.mozRequestFullScreen || 
+                                         gameLayout.msRequestFullscreen;
+                
+                if (requestFullscreen) {
+                    requestFullscreen.call(gameLayout).then(() => {
+                        isFullscreenActive = true;
+                        // Kısa bir gecikme ile canvas'ı yeniden boyutlandır (browser fullscreen animasyonu için)
+                        setTimeout(() => {
+                            resizeCanvasForFullscreen();
+                            resetGame(); // Oyunu yeniden başlat (çoklu elma için)
+                        }, 100);
+                    }).catch(err => {
+                        console.error("Tam ekran hatası:", err);
+                        alert("Tam ekran modu desteklenmiyor veya izin verilmedi.");
+                    });
+                } else {
+                    alert("Tarayıcınız tam ekran modunu desteklemiyor.");
+                }
             }
         }
         
         // Tam ekrandan çık
         function exitFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().then(() => {
+            const exitFullscreen = document.exitFullscreen || 
+                                   document.webkitExitFullscreen || 
+                                   document.mozCancelFullScreen || 
+                                   document.msExitFullscreen;
+            
+            if (exitFullscreen) {
+                exitFullscreen.call(document).then(() => {
                     isFullscreenActive = false;
                     resizeCanvasForFullscreen();
-                    if (btnFullscreenToggle) {
-                        btnFullscreenToggle.textContent = "⛶ Tam Ekran";
-                    }
                     resetGame(); // Oyunu yeniden başlat (tek elma için)
                 }).catch(err => {
                     console.error("Tam ekran çıkış hatası:", err);
@@ -3464,14 +3480,29 @@
             }
         }
         
-        // Tam ekran değişikliklerini dinle
+        // Tam ekran değişikliklerini dinle (tüm browser'lar için)
         document.addEventListener("fullscreenchange", () => {
-            if (!document.fullscreenElement) {
+            handleFullscreenChange();
+        });
+        document.addEventListener("webkitfullscreenchange", () => {
+            handleFullscreenChange();
+        });
+        document.addEventListener("mozfullscreenchange", () => {
+            handleFullscreenChange();
+        });
+        document.addEventListener("MSFullscreenChange", () => {
+            handleFullscreenChange();
+        });
+        
+        function handleFullscreenChange() {
+            const isFullscreen = !!(document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement);
+            
+            if (!isFullscreen) {
                 isFullscreenActive = false;
                 resizeCanvasForFullscreen();
-                if (btnFullscreenToggle) {
-                    btnFullscreenToggle.textContent = "⛶ Tam Ekran";
-                }
                 // Eğer tam ekran modundaysa oyunu sıfırla
                 if (gameMode === "fullscreen") {
                     resetGame();
@@ -3479,11 +3510,11 @@
             } else {
                 isFullscreenActive = true;
                 resizeCanvasForFullscreen();
-                if (btnFullscreenToggle) {
-                    btnFullscreenToggle.textContent = "⛶ Çıkış";
+                if (gameMode === "fullscreen") {
+                    resetGame();
                 }
             }
-        });
+        }
 
         const btnMenu = document.getElementById("btn-menu");
         if (btnMenu) {
