@@ -1297,6 +1297,17 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <div class="settings-section-title">Ses</div>
+                <div class="control-option" style="cursor: pointer;" id="sound-toggle-option">
+                    <input type="checkbox" id="sound-toggle" checked style="margin-right: 12px; cursor: pointer;">
+                    <label for="sound-toggle" class="control-option-label" style="cursor: pointer; flex: 1;">
+                        <div>Ses Efektleri</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Elma yeme, çarpma ve level-up sesleri</div>
+                    </label>
+                </div>
+            </div>
+
             <div class="button-group">
                 <button type="button" class="settings-button" id="btn-settings-close">Kaydet ve Kapat</button>
                 <button type="button" class="settings-button secondary" id="btn-settings-menu">Menüye Dön</button>
@@ -1529,6 +1540,90 @@
         // Sayfa yüklendiğinde temayı uygula
         applyTheme(currentTheme);
 
+        // ========== SOUND SYSTEM ==========
+        let soundEnabled = localStorage.getItem("snake_sound_enabled") !== "false"; // Varsayılan açık
+        let soundPlaying = {}; // Spam guard için
+        
+        // AudioContext fallback için
+        let audioContext = null;
+        function getAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn("AudioContext desteklenmiyor");
+                    return null;
+                }
+            }
+            return audioContext;
+        }
+        
+        // Beep sesi üret (fallback)
+        function generateBeep(frequency, duration, type = "sine") {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            
+            try {
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + duration);
+            } catch (e) {
+                console.warn("Beep üretilemedi:", e);
+            }
+        }
+        
+        // Ses dosyası yükleme (fallback ile)
+        function playSound(soundName) {
+            if (!soundEnabled) return;
+            
+            // Spam guard: Aynı ses çok hızlı tekrar çalınmasın
+            const now = Date.now();
+            if (soundPlaying[soundName] && now - soundPlaying[soundName] < 50) {
+                return;
+            }
+            soundPlaying[soundName] = now;
+            
+            // Ses dosyasını yükle
+            const audio = new Audio(`/static/sounds/${soundName}.mp3`);
+            
+            audio.volume = 0.5;
+            
+            audio.play().catch(err => {
+                // Ses dosyası yoksa veya çalınamazsa beep fallback kullan
+                console.log(`Ses dosyası yüklenemedi (${soundName}), beep kullanılıyor`);
+                
+                if (soundName === "eat") {
+                    generateBeep(800, 0.1, "sine");
+                } else if (soundName === "hit") {
+                    generateBeep(200, 0.2, "sawtooth");
+                } else if (soundName === "level") {
+                    generateBeep(600, 0.15, "sine");
+                    setTimeout(() => generateBeep(800, 0.15, "sine"), 100);
+                }
+            });
+        }
+        
+        // Ses ayarını güncelle
+        function updateSoundSetting(enabled) {
+            soundEnabled = enabled;
+            localStorage.setItem("snake_sound_enabled", enabled ? "true" : "false");
+            const soundToggle = document.getElementById("sound-toggle");
+            if (soundToggle) {
+                soundToggle.checked = enabled;
+            }
+        }
+
         // ========== CONTROL SYSTEM ==========
         let controlScheme = localStorage.getItem("snakeControlScheme") || "arrows"; // "arrows" veya "wasd"
         
@@ -1634,6 +1729,12 @@
                     if (themeDiv) themeDiv.classList.add("selected");
                 }
             });
+            
+            // Ses ayarını güncelle
+            const soundToggle = document.getElementById("sound-toggle");
+            if (soundToggle) {
+                soundToggle.checked = soundEnabled;
+            }
         }
 
         // ========== PASSWORD TOGGLE ==========
@@ -1942,6 +2043,11 @@
             if (selectedTheme) {
                 applyTheme(selectedTheme.value);
             }
+            // Ses ayarını kaydet
+            const soundToggle = document.getElementById("sound-toggle");
+            if (soundToggle) {
+                updateSoundSetting(soundToggle.checked);
+            }
             showScreen("game");
         });
 
@@ -1964,8 +2070,21 @@
             if (selectedTheme) {
                 applyTheme(selectedTheme.value);
             }
+            // Ses ayarını kaydet
+            const soundToggle = document.getElementById("sound-toggle");
+            if (soundToggle) {
+                updateSoundSetting(soundToggle.checked);
+            }
             showScreen("menu");
         });
+        
+        // Ses toggle değişikliği
+        const soundToggle = document.getElementById("sound-toggle");
+        if (soundToggle) {
+            soundToggle.addEventListener("change", (e) => {
+                updateSoundSetting(e.target.checked);
+            });
+        }
 
         // Kontrol seçeneklerini değiştir
         document.querySelectorAll('input[name="controls"]').forEach(radio => {
@@ -2719,6 +2838,9 @@
                 const centerX = head.x * gridSize + gridSize / 2;
                 const centerY = head.y * gridSize + gridSize / 2;
                 spawnParticles(centerX, centerY, "rgb(248,113,113)");
+                
+                // Elma yeme sesi
+                playSound("eat");
 
                 // Yeni yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
                 food = randomFood();
@@ -2736,6 +2858,8 @@
                 if (newLevel !== level) {
                     level = newLevel;
                     levelSpan.textContent = level;
+                    // Level-up sesi
+                    playSound("level");
                 }
 
                 // Her 10 puan kazanınca can kazan
@@ -2771,6 +2895,9 @@
             }
 
             if (lifeConsumed) {
+                // Çarpma sesi
+                playSound("hit");
+                
                 // Yılanı önceki haline geri al
                 if (previousSnakeBody) {
                     snake = JSON.parse(JSON.stringify(previousSnakeBody));
@@ -2791,6 +2918,9 @@
             gameOver = true;
             shakeTime = 24;
             shakeStrength = 8;
+            
+            // Oyun bitiş sesi
+            playSound("hit");
 
             if (score > highScore) {
                 highScore = score;
