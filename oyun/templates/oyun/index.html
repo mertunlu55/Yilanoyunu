@@ -790,10 +790,13 @@
             display: none;
             position: fixed;
             inset: 0;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             z-index: 1001;
             background: radial-gradient(circle at top, #0b1120 0, #000 45%, #020617 100%);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
         }
 
         #settings-screen.active {
@@ -809,6 +812,8 @@
                 0 0 0 1px rgba(148,163,184,0.15);
             min-width: 400px;
             max-width: 500px;
+            width: 100%;
+            margin: 20px auto;
         }
 
         .settings-title {
