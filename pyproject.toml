@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "yilanoyunu"
+version = "0.1.0"
+description = "Snake Game Django Project"
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Django = "4.2.27"
+dj-database-url = "3.0.1"
+whitenoise = "6.8.2"
+asgiref = "3.11.0"
+sqlparse = "0.5.4"
+tzdata = "2025.3"
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
