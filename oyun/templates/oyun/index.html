@@ -1471,7 +1471,7 @@
                     </div>
                     <div class="hud-right">
                         <div class="pill high-pill">
-                            <span class="pill-label">En Yüksek (local)</span>
+                            <span class="pill-label" id="high-label">En Yüksek</span>
                             <span class="pill-value" id="high-value">0</span>
                         </div>
                         <div class="pill speed-pill">
@@ -1868,6 +1868,8 @@
         document.getElementById("btn-start-game").addEventListener("click", () => {
             showScreen("game");
             resetGame();
+            // Oyun başladığında en yüksek skoru güncelle
+            loadHighestScore();
         });
 
         document.getElementById("btn-view-profile").addEventListener("click", () => {
@@ -2163,6 +2165,7 @@
         const scoreSpan = document.getElementById("score-value");
         const levelSpan = document.getElementById("level-value");
         const highSpan = document.getElementById("high-value");
+        const highLabel = document.getElementById("high-label");
         const speedLabel = document.getElementById("speed-label");
 
         const overlay = document.getElementById("overlay");
@@ -2188,6 +2191,50 @@
         let paused = false;
         let gameOver = false;
         let highScore = Number(localStorage.getItem("snakeHighScoreV3") || 0);
+        let dbHighScore = 0; // Veritabanından gelen en yüksek skor
+        
+        // Veritabanından en yüksek skoru çek
+        async function loadHighestScore() {
+            try {
+                const res = await fetch("/api/score/top/?limit=1");
+                if (!res.ok) throw new Error("http");
+                const data = await res.json();
+                const list = data.results || [];
+                
+                if (list.length > 0 && list[0].score) {
+                    dbHighScore = list[0].score;
+                    // Veritabanından gelen skor daha yüksekse onu göster
+                    if (dbHighScore > highScore) {
+                        highScore = dbHighScore;
+                        highSpan.textContent = highScore;
+                        if (highLabel) {
+                            highLabel.textContent = "En Yüksek";
+                        }
+                    } else {
+                        // Local skor daha yüksekse onu göster ama label'ı güncelle
+                        highSpan.textContent = highScore;
+                        if (highLabel) {
+                            highLabel.textContent = highScore > dbHighScore ? "En Yüksek (local)" : "En Yüksek";
+                        }
+                    }
+                } else {
+                    // Veritabanında skor yoksa local'i göster
+                    highSpan.textContent = highScore;
+                    if (highLabel) {
+                        highLabel.textContent = highScore > 0 ? "En Yüksek (local)" : "En Yüksek";
+                    }
+                }
+            } catch (err) {
+                // Hata durumunda local skoru göster
+                highSpan.textContent = highScore;
+                if (highLabel) {
+                    highLabel.textContent = highScore > 0 ? "En Yüksek (local)" : "En Yüksek";
+                }
+            }
+        }
+        
+        // Sayfa yüklendiğinde en yüksek skoru çek
+        loadHighestScore();
 
         let particles = [];
         let shakeTime = 0;
@@ -2926,7 +2973,16 @@
                 highScore = score;
                 localStorage.setItem("snakeHighScoreV3", String(highScore));
                 highSpan.textContent = highScore;
+                if (highLabel) {
+                    highLabel.textContent = "En Yüksek (local)";
+                }
             }
+            
+            // Oyun bittiğinde veritabanından güncel en yüksek skoru çek
+            await loadHighestScore();
+            
+            // Oyun bittiğinde veritabanından güncel en yüksek skoru çek
+            await loadHighestScore();
 
             // Otomatik kaydet (misafir değilse ve kullanıcı adı varsa)
             if (!guestMode && currentUsername && score > 0) {
@@ -2942,7 +2998,10 @@
 
         function showOverlay() {
             overlayScore.textContent = `Skorun: ${score}`;
-            overlayHigh.textContent = `Local en yüksek: ${highScore}`;
+            const highText = dbHighScore > 0 && dbHighScore >= highScore 
+                ? `En yüksek: ${dbHighScore}` 
+                : `Local en yüksek: ${highScore}`;
+            overlayHigh.textContent = highText;
             overlay.style.display = "flex";
             
             const nameRow = document.getElementById("name-row");
