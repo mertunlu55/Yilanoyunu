@@ -1879,10 +1879,24 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Giriş hatası:", res.status, errorText);
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        return { ok: false, message: errorData.message || errorData.error || "Giriş başarısız" };
+                    } catch {
+                        return { ok: false, message: `HTTP ${res.status}: ${errorText}` };
+                    }
+                }
+                
                 const data = await res.json();
+                console.log("Giriş başarılı:", username, data);
                 return data;
             } catch (err) {
-                return { ok: false, message: "Bağlantı hatası" };
+                console.error("Giriş exception:", err);
+                return { ok: false, message: err.message || "Bağlantı hatası" };
             }
         }
 
@@ -1893,10 +1907,24 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Kayıt hatası:", res.status, errorText);
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        return { ok: false, message: errorData.message || errorData.error || "Kayıt başarısız" };
+                    } catch {
+                        return { ok: false, message: `HTTP ${res.status}: ${errorText}` };
+                    }
+                }
+                
                 const data = await res.json();
+                console.log("Kullanıcı kaydedildi:", username, data);
                 return data;
             } catch (err) {
-                return { ok: false, message: "Bağlantı hatası" };
+                console.error("Kayıt exception:", err);
+                return { ok: false, message: err.message || "Bağlantı hatası" };
             }
         }
 
@@ -1958,8 +1986,9 @@
             }
 
             const result = await registerUser(username, password);
+            console.log("Kayıt sonucu:", result);
 
-            if (result.ok) {
+            if (result && result.ok) {
                 successEl.textContent = "Hesap oluşturuldu! Giriş ekranına yönlendiriliyorsunuz...";
                 document.getElementById("login-username").value = username;
                 setTimeout(() => {
@@ -1969,7 +1998,9 @@
                     document.getElementById("signup-password-confirm").value = "";
                 }, 1500);
             } else {
-                errorEl.textContent = result.message || "Kayıt başarısız";
+                const errorMsg = result?.message || result?.error || "Kayıt başarısız";
+                errorEl.textContent = errorMsg;
+                console.error("Kayıt hatası detayı:", result);
             }
         });
 
@@ -3098,18 +3129,22 @@
             await loadHighestScore();
 
             // Otomatik kaydet (misafir değilse ve kullanıcı adı varsa)
+            let scoreSaved = false;
             if (!guestMode && currentUsername && score > 0) {
                 const result = await saveScoreToServer(currentUsername, score);
                 if (result && result.ok) {
+                    scoreSaved = true;
                     // Skor kaydedildi, leaderboard'u güncelle
                     loadTopScores();
+                } else {
+                    console.error("Skor kaydedilemedi:", result);
                 }
             }
 
-            showOverlay();
+            showOverlay(scoreSaved);
         }
 
-        function showOverlay() {
+        function showOverlay(scoreSaved = false) {
             overlayScore.textContent = `Skorun: ${score}`;
             const highText = dbHighScore > 0 && dbHighScore >= highScore 
                 ? `En yüksek: ${dbHighScore}` 
@@ -3132,10 +3167,21 @@
                     saveStatus.style.color = "var(--text-muted)";
                 }
             } else {
-                // Giriş yapılmış kullanıcı için otomatik kaydedildi
-                nameRow.style.display = "none";
-                saveStatus.textContent = "Skorunuz otomatik olarak kaydedildi! ✅";
-                saveStatus.style.color = "#4ade80";
+                // Giriş yapılmış kullanıcı için
+                if (scoreSaved) {
+                    // Skor başarıyla kaydedildi
+                    nameRow.style.display = "none";
+                    saveStatus.textContent = "Skorunuz otomatik olarak kaydedildi! ✅";
+                    saveStatus.style.color = "#4ade80";
+                } else {
+                    // Skor kaydedilemedi, manuel kaydetme seçeneği göster
+                    nameRow.style.display = "flex";
+                    nameInput.value = currentUsername;
+                    nameInput.disabled = false;
+                    btnSave.style.display = "inline-block";
+                    saveStatus.textContent = "Otomatik kayıt başarısız. Lütfen manuel olarak kaydedin.";
+                    saveStatus.style.color = "#f97373";
+                }
             }
         }
 
@@ -3156,13 +3202,16 @@
                 });
 
                 if (!res.ok) {
-                    return { ok: false };
+                    const errorText = await res.text();
+                    console.error("Skor kaydetme hatası:", res.status, errorText);
+                    return { ok: false, message: `HTTP ${res.status}: ${errorText}` };
                 }
                 const data = await res.json();
+                console.log("Skor kaydedildi:", username, score, data);
                 return data;
             } catch (err) {
-                console.error(err);
-                return { ok: false };
+                console.error("Skor kaydetme exception:", err);
+                return { ok: false, message: err.message || "Bağlantı hatası" };
             }
         }
 

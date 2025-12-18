@@ -17,35 +17,40 @@ def submit_score(request):
     body: {"username": "Mert", "score": 25}
     """
     if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=405)
+        return JsonResponse({"ok": False, "error": "POST required", "message": "POST metodu gerekli"}, status=405)
 
     try:
         data = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        return JsonResponse({"ok": False, "error": "Invalid JSON", "message": "Geçersiz JSON"}, status=400)
 
     username = (data.get("username") or "").strip()
     score_value = data.get("score")
 
     # Basit validasyon
     if not username:
-        return JsonResponse({"error": "username_required"}, status=400)
+        return JsonResponse({"ok": False, "error": "username_required", "message": "Kullanıcı adı gerekli"}, status=400)
 
     try:
         score_value = int(score_value)
     except (TypeError, ValueError):
-        return JsonResponse({"error": "invalid_score"}, status=400)
+        return JsonResponse({"ok": False, "error": "invalid_score", "message": "Geçersiz skor"}, status=400)
 
     if score_value <= 0:
-        return JsonResponse({"error": "score_must_be_positive"}, status=400)
+        return JsonResponse({"ok": False, "error": "score_must_be_positive", "message": "Skor pozitif olmalı"}, status=400)
 
     # Oyuncuyu bul / oluştur
-    player, _created = Player.objects.get_or_create(username=username[:32])
+    try:
+        player, _created = Player.objects.get_or_create(username=username[:32])
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": "player_creation_failed", "message": f"Oyuncu oluşturulamadı: {str(e)}"}, status=500)
 
     # Skoru kaydet
-    Score.objects.create(player=player, value=score_value)
-
-    return JsonResponse({"ok": True})
+    try:
+        Score.objects.create(player=player, value=score_value)
+        return JsonResponse({"ok": True, "message": "Skor başarıyla kaydedildi"})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": "score_creation_failed", "message": f"Skor kaydedilemedi: {str(e)}"}, status=500)
 
 
 def top_scores(request):
