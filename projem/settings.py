@@ -14,7 +14,10 @@ DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = [
     "yilanoyunu-foss.onrender.com",
+    "yilanoyunu-1.onrender.com",
     ".onrender.com",
+    "localhost",
+    "127.0.0.1",
 ]
 
 
