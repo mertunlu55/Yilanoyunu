@@ -30,10 +30,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
             transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden;
         }
 
         body::before {
@@ -416,7 +422,7 @@
         }
 
         #layout {
-            margin-top: 26px;
+            margin-top: 20px;
             display: flex;
             gap: 20px;
             align-items: flex-start;
@@ -1107,7 +1113,7 @@
                 height: auto;
                 max-width: 100%;
                 max-height: 90vh;
-                aspect-ratio: 1;
+                aspect-ratio: 2/1; /* 1200x600 oranı */
             }
         }
 
@@ -1166,7 +1172,7 @@
                 max-height: 400px;
                 width: auto;
                 height: auto;
-                aspect-ratio: 1;
+                aspect-ratio: 2/1; /* 1200x600 oranı */
             }
 
             #hud {
@@ -1246,7 +1252,7 @@
             canvas {
                 max-width: 100%;
                 max-height: 320px;
-                aspect-ratio: 1;
+                aspect-ratio: 2/1; /* 1200x600 oranı */
             }
 
             #game-wrapper {
@@ -1573,18 +1579,12 @@
 
     <!-- Oyun Ekranı -->
     <div id="game-layout">
-        <h1>
-            Yılan Oyunu
-            <span class="logo-icon">🧬</span>
-        </h1>
-        <div class="subtitle">Neon grid, patlama efektleri ve online skor tablosu ile mini arcade oyunun ✨</div>
-
         <div id="layout">
         <!-- Oyun -->
         <div id="game-wrapper">
             <div id="game-card">
                 <div style="position:relative; display:inline-block;">
-                    <canvas id="game" width="600" height="600"></canvas>
+                    <canvas id="game" width="1200" height="600"></canvas>
 
                     <!-- Game over / pause overlay -->
                     <div id="overlay">
@@ -2412,15 +2412,19 @@
         const lbEmpty = document.getElementById("leaderboard-empty");
 
         const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
+        const tileCountX = Math.floor(canvas.width / gridSize);  // Yatay tile sayısı
+        const tileCountY = Math.floor(canvas.height / gridSize); // Dikey tile sayısı
+        const mapArea = tileCountX * tileCountY; // Map alanı (hız hesaplaması için)
 
         let snake;
         let vx;
         let vy;
-        let food;
+        let foods = []; // 3 elma için array
         let foodTimer = null; // Elma zamanlayıcısı
         let foodTimerStart = 0; // Elma oluşturulma zamanı
-        const FOOD_TIMEOUT = 6000; // 6 saniye (milisaniye)
+        const FOOD_TIMEOUT = 4000; // 4 saniye (milisaniye) - daha adil
+        const MAX_FOODS = 3; // Aynı anda maksimum elma sayısı
+        const MIN_FOOD_DISTANCE = 6; // Elmalar arası minimum mesafe (tile cinsinden)
         let score;
         let level;
         let paused = false;
@@ -2494,13 +2498,23 @@
         const livesSpan = document.getElementById("lives-value");
         highSpan.textContent = highScore;
 
+        // İki pozisyon arasındaki Manhattan mesafesini hesapla
+        function getDistance(pos1, pos2) {
+            return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
+        }
+        
+        // Yeni elma mevcut elmalardan yeterince uzak mı kontrol et
+        function isFoodTooClose(newFood, existingFoods, minDistance) {
+            return existingFoods.some(food => getDistance(newFood, food) < minDistance);
+        }
+        
         function randomFood() {
             let position;
             let attempts = 0;
             do {
                 position = {
-                    x: Math.floor(Math.random() * tileCount),
-                    y: Math.floor(Math.random() * tileCount)
+                    x: Math.floor(Math.random() * tileCountX),
+                    y: Math.floor(Math.random() * tileCountY)
                 };
                 attempts++;
             } while (
@@ -2511,34 +2525,38 @@
             return position;
         }
         
-        // Elma timer fonksiyonu - 6 saniye sonra yeni konumda doğsun
+        // Elma timer fonksiyonu - 4 saniye sonra yeni konumlarda doğsun (3 elma)
         function startFoodTimer() {
             if (foodTimer) {
                 clearTimeout(foodTimer);
             }
             
             foodTimer = setTimeout(() => {
-                if (gameOver || paused || !food) return;
+                if (gameOver || paused || !foods || foods.length === 0) return;
                 
-                // Eski elmayı kaldır, yeni konumda oluştur
-                let newFood = randomFood();
-                let attempts = 0;
-                
-                // Yeni elma yılan veya engellerle çakışmamalı
-                while (
-                    (snake && snake.some(s => s.x === newFood.x && s.y === newFood.y)) ||
-                    (obstacles && obstacles.some(obs => obs.x === newFood.x && obs.y === newFood.y)) ||
-                    (newFood.x === food.x && newFood.y === food.y) // Aynı yerde olmasın
-                ) {
-                    newFood = randomFood();
-                    attempts++;
-                    if (attempts > 200) break; // Sonsuz döngüyü önle
+                // Eski elmaları kaldır, yeni konumlarda oluştur (3 elma)
+                foods = [];
+                for (let i = 0; i < MAX_FOODS; i++) {
+                    let newFood = randomFood();
+                    let attempts = 0;
+                    
+                    // Yeni elma yılan, engeller, diğer elmalarla çakışmamalı ve minimum mesafede olmalı
+                    while (
+                        (snake && snake.some(s => s.x === newFood.x && s.y === newFood.y)) ||
+                        (obstacles && obstacles.some(obs => obs.x === newFood.x && obs.y === newFood.y)) ||
+                        foods.some(f => f.x === newFood.x && f.y === newFood.y) ||
+                        isFoodTooClose(newFood, foods, MIN_FOOD_DISTANCE) ||
+                        attempts < 500
+                    ) {
+                        newFood = randomFood();
+                        attempts++;
+                        if (attempts > 500) break;
+                    }
+                    foods.push(newFood);
                 }
-                
-                food = newFood;
                 foodTimerStart = Date.now();
                 
-                // Yeni elma için timer'ı tekrar başlat
+                // Yeni elmalar için timer'ı tekrar başlat
                 startFoodTimer();
             }, FOOD_TIMEOUT);
         }
@@ -2548,8 +2566,8 @@
             if (gameMode !== "random") return;
             
             // Yılanın başlangıç konumu (tileCount'a göre ortada)
-            const startX = Math.floor(tileCount / 2);
-            const startY = Math.floor(tileCount / 2);
+            const startX = Math.floor(tileCountX / 2);
+            const startY = Math.floor(tileCountY / 2);
             const startPositions = [
                 {x: startX, y: startY},
                 {x: startX - 1, y: startY},
@@ -2557,7 +2575,7 @@
             ];
             
             // Toplam engel sayısı (harita boyutuna göre)
-            const obstacleCount = Math.floor((tileCount * tileCount) * 0.15); // %15 engel
+            const obstacleCount = Math.floor((tileCountX * tileCountY) * 0.08); // %8 engel (azaltıldı)
             
             for (let i = 0; i < obstacleCount; i++) {
                 let position;
@@ -2566,8 +2584,8 @@
                 
                 do {
                     position = {
-                        x: Math.floor(Math.random() * tileCount),
-                        y: Math.floor(Math.random() * tileCount)
+                        x: Math.floor(Math.random() * tileCountX),
+                        y: Math.floor(Math.random() * tileCountY)
                     };
                     attempts++;
                     
@@ -2605,8 +2623,8 @@
 
         function resetGame() {
             // Yılan başlangıç pozisyonu tileCount'a göre ortada
-            const startX = Math.floor(tileCount / 2);
-            const startY = Math.floor(tileCount / 2);
+            const startX = Math.floor(tileCountX / 2);
+            const startY = Math.floor(tileCountY / 2);
             snake = [
                 {x: startX, y: startY},
                 {x: startX - 1, y: startY},
@@ -2624,11 +2642,31 @@
                 foodTimer = null;
             }
             
-            // Yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
-            food = randomFood();
+            // 3 elma oluştur
+            foods = [];
+            for (let i = 0; i < MAX_FOODS; i++) {
+                let newFood = randomFood();
+                let attempts = 0;
+                // Yeni elma yılan, engeller, diğer elmalarla çakışmamalı ve minimum mesafede olmalı
+                while (
+                    (snake && snake.some(s => s.x === newFood.x && s.y === newFood.y)) ||
+                    (obstacles && obstacles.some(obs => obs.x === newFood.x && obs.y === newFood.y)) ||
+                    foods.some(f => f.x === newFood.x && f.y === newFood.y) ||
+                    isFoodTooClose(newFood, foods, MIN_FOOD_DISTANCE) ||
+                    attempts < 500
+                ) {
+                    newFood = randomFood();
+                    attempts++;
+                    if (attempts > 500) break;
+                }
+                foods.push(newFood);
+            }
             foodTimerStart = Date.now();
             
             // Elma timer'ını başlat
+            if (foodTimer) {
+                clearTimeout(foodTimer);
+            }
             startFoodTimer();
             
             score = 0;
@@ -2658,13 +2696,22 @@
         }
 
         function getIntervalByScore(sc) {
-            // Canvas boyutuna göre hız ayarı (tileCount'a göre)
-            // Daha büyük harita = biraz daha hızlı olabilir (daha fazla alan var)
-            const sizeMultiplier = tileCount / 20; // 20 tile için 1.0, 30 tile için 1.5
-            const baseSpeed = 200 * (1 / sizeMultiplier); // Daha büyük haritada biraz daha hızlı
+            // Map alanına göre hız ayarı (width × height)
+            // Daha büyük harita = daha hızlı hareket (daha fazla alan var, daha uzun mesafe)
+            const baseArea = 20 * 20; // 400 (eski kare harita)
+            const areaMultiplier = mapArea / baseArea; // Map alanına göre çarpan
+            
+            // Map alanı büyüdükçe hız artar (daha büyük haritada daha hızlı hareket)
+            // Örnek: 900x600 = 45x30 = 1350 alan, çarpan = 1350/400 = 3.375
+            // Hız = baseSpeed / (1 + areaMultiplier * 0.3) -> daha büyük haritada daha hızlı
+            const speedBoost = 1 + (areaMultiplier - 1) * 0.25; // %25 hız artışı her alan artışında
+            const baseSpeed = 200 / speedBoost; // Daha büyük haritada daha hızlı başlangıç
+            
+            // Level bazlı hız artışı
+            const levelMultiplier = 1 + (level - 1) * 0.1; // Her level'da %10 hız artışı
             
             // Yavaş başlangıç ve kademeli hızlanma
-            const base = Math.floor(baseSpeed); // Başlangıç hızı
+            const base = Math.floor(baseSpeed / levelMultiplier); // Başlangıç hızı
             // Her 8 puanda 5ms azalt (daha yavaş hızlanma)
             const step = Math.floor(sc / 8) * 5;
             // Minimum 80ms'ye kadar düşebilir (daha yavaş maksimum hız)
@@ -2726,8 +2773,8 @@
                 obstacleStrokeColor = "rgba(148, 163, 184, 0.6)";
             }
             
-            for (let x = 0; x < tileCount; x++) {
-                for (let y = 0; y < tileCount; y++) {
+            for (let x = 0; x < tileCountX; x++) {
+                for (let y = 0; y < tileCountY; y++) {
                     const even = (x + y) % 2 === 0;
                     const base = even ? gridColor1 : gridColor2;
                     ctx.fillStyle = base;
@@ -2737,12 +2784,13 @@
 
             ctx.strokeStyle = gridLineColor;
             ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
+            for (let i = 0; i <= tileCountX; i++) {
                 ctx.beginPath();
                 ctx.moveTo(i * gridSize + 0.5, 0);
                 ctx.lineTo(i * gridSize + 0.5, canvas.height);
                 ctx.stroke();
-
+            }
+            for (let i = 0; i <= tileCountY; i++) {
                 ctx.beginPath();
                 ctx.moveTo(0, i * gridSize + 0.5);
                 ctx.lineTo(canvas.width, i * gridSize + 0.5);
@@ -2879,10 +2927,7 @@
             ctx.fill();
         }
 
-        function drawFood() {
-            const cx = food.x * gridSize + gridSize / 2;
-            const cy = food.y * gridSize + gridSize / 2;
-
+        function drawFoods() {
             // Tema bazlı renkler
             let foodColor, glowColor, highlightColor, stemColor, leafColor;
             
@@ -2907,42 +2952,48 @@
                 leafColor = "#22c55e";
             }
 
-            // Glow efekti (sadece neon ve retro temalarda)
-            if (currentTheme !== "minimal") {
-                const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, gridSize / 1.3);
-                gradient.addColorStop(0, glowColor);
-                gradient.addColorStop(1, glowColor.replace("0.9", "0").replace("0.6", "0"));
-                ctx.fillStyle = gradient;
+            // 3 elma çiz
+            foods.forEach(food => {
+                const cx = food.x * gridSize + gridSize / 2;
+                const cy = food.y * gridSize + gridSize / 2;
+
+                // Glow efekti (sadece neon ve retro temalarda)
+                if (currentTheme !== "minimal") {
+                    const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, gridSize / 1.3);
+                    gradient.addColorStop(0, glowColor);
+                    gradient.addColorStop(1, glowColor.replace("0.9", "0").replace("0.6", "0"));
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, gridSize / 1.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Ana yem
+                ctx.fillStyle = foodColor;
                 ctx.beginPath();
-                ctx.arc(cx, cy, gridSize / 1.3, 0, Math.PI * 2);
+                ctx.arc(cx, cy, gridSize / 2.3, 0, Math.PI * 2);
                 ctx.fill();
-            }
 
-            // Ana yem
-            ctx.fillStyle = foodColor;
-            ctx.beginPath();
-            ctx.arc(cx, cy, gridSize / 2.3, 0, Math.PI * 2);
-            ctx.fill();
+                // Highlight
+                ctx.fillStyle = highlightColor;
+                ctx.beginPath();
+                ctx.arc(cx - 4, cy - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
 
-            // Highlight
-            ctx.fillStyle = highlightColor;
-            ctx.beginPath();
-            ctx.arc(cx - 4, cy - 4, 3, 0, Math.PI * 2);
-            ctx.fill();
+                // Sap
+                ctx.strokeStyle = stemColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - gridSize / 2.3);
+                ctx.lineTo(cx + 3, cy - gridSize / 1.8);
+                ctx.stroke();
 
-            // Sap
-            ctx.strokeStyle = stemColor;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - gridSize / 2.3);
-            ctx.lineTo(cx + 3, cy - gridSize / 1.8);
-            ctx.stroke();
-
-            // Yaprak
-            ctx.fillStyle = leafColor;
-            ctx.beginPath();
-            ctx.ellipse(cx + 5, cy - gridSize / 2.2, 4, 6, -0.4, 0, Math.PI * 2);
-            ctx.fill();
+                // Yaprak
+                ctx.fillStyle = leafColor;
+                ctx.beginPath();
+                ctx.ellipse(cx + 5, cy - gridSize / 2.2, 4, 6, -0.4, 0, Math.PI * 2);
+                ctx.fill();
+            }); // forEach döngüsünü kapat
         }
 
         function drawTemporaryLife(tempLife) {
@@ -3009,15 +3060,19 @@
         }
 
         function draw() {
-            // Snake ve food tanımlı değilse çizme
-            if (!snake || !food) {
+            // Snake tanımlı değilse çizme
+            if (!snake) {
                 drawBoard();
                 return;
             }
             
             const didShake = applyShake();
             drawBoard();
-            drawFood();
+            
+            // Elmaları çiz (varsa)
+            if (foods && foods.length > 0) {
+                drawFoods();
+            }
             // Süreli can öğelerini çiz
             for (const tempLife of temporaryLifeItems) {
                 drawTemporaryLife(tempLife);
@@ -3051,7 +3106,7 @@
         }
 
         function tick() {
-            if (paused || gameOver || !snake || !food) {
+            if (paused || gameOver || !snake || !foods || foods.length === 0) {
                 draw();
                 return;
             }
@@ -3093,7 +3148,7 @@
                     // Yılan, yem veya engel ile çakışmasın
                     while (
                         (tempLife.position.x === snake[0].x && tempLife.position.y === snake[0].y) ||
-                        (tempLife.position.x === food.x && tempLife.position.y === food.y) ||
+                        foods.some(f => f.x === tempLife.position.x && f.y === tempLife.position.y) ||
                         snake.some(s => s.x === tempLife.position.x && s.y === tempLife.position.y) ||
                         (obstacles && obstacles.some(obs => obs.x === tempLife.position.x && obs.y === tempLife.position.y))
                     ) {
@@ -3111,18 +3166,18 @@
 
             // Duvara çarpma kontrolü
             if (
-                head.x < 0 || head.x >= tileCount ||
-                head.y < 0 || head.y >= tileCount
+                head.x < 0 || head.x >= tileCountX ||
+                head.y < 0 || head.y >= tileCountY
             ) {
                 // Duvarlı modda duvardan çarpınca can sistemi devreye girer
                 if (gameMode === "duvarlı") {
                     return handleCollision();
                 }
                 // Klasik, hızlı ve random modda duvardan geçer (wrap around)
-                if (head.x < 0) head.x = tileCount - 1;
-                if (head.x >= tileCount) head.x = 0;
-                if (head.y < 0) head.y = tileCount - 1;
-                if (head.y >= tileCount) head.y = 0;
+                if (head.x < 0) head.x = tileCountX - 1;
+                if (head.x >= tileCountX) head.x = 0;
+                if (head.y < 0) head.y = tileCountY - 1;
+                if (head.y >= tileCountY) head.y = 0;
             }
             
             // Random harita modunda engellere çarpma kontrolü
@@ -3166,7 +3221,16 @@
                 }
             }
 
-            if (head.x === food.x && head.y === food.y) {
+            // 3 elmadan birini yedi mi kontrol et
+            let eatenFoodIndex = -1;
+            for (let i = 0; i < foods.length; i++) {
+                if (head.x === foods[i].x && head.y === foods[i].y) {
+                    eatenFoodIndex = i;
+                    break;
+                }
+            }
+            
+            if (eatenFoodIndex !== -1) {
                 score++;
                 scoreSpan.textContent = score;
                 const centerX = head.x * gridSize + gridSize / 2;
@@ -3176,27 +3240,36 @@
                 // Elma yeme sesi
                 playSound("eat");
 
-                // Timer'ı sıfırla ve yeni elma oluştur
+                // Yenilen elmayı kaldır
+                foods.splice(eatenFoodIndex, 1);
+                
+                // Yeni elma oluştur (3 elma olmalı)
+                while (foods.length < MAX_FOODS) {
+                    let newFood = randomFood();
+                    let attempts = 0;
+                    
+                    // Yeni elma yılan, engeller, diğer elmalarla çakışmamalı ve minimum mesafede olmalı
+                    while (
+                        (snake && snake.some(s => s.x === newFood.x && s.y === newFood.y)) ||
+                        (obstacles && obstacles.some(obs => obs.x === newFood.x && obs.y === newFood.y)) ||
+                        foods.some(f => f.x === newFood.x && f.y === newFood.y) ||
+                        isFoodTooClose(newFood, foods, MIN_FOOD_DISTANCE) ||
+                        attempts < 500
+                    ) {
+                        newFood = randomFood();
+                        attempts++;
+                        if (attempts > 500) break;
+                    }
+                    foods.push(newFood);
+                }
+                
+                foodTimerStart = Date.now();
+                
+                // Timer'ı sıfırla ve yeniden başlat
                 if (foodTimer) {
                     clearTimeout(foodTimer);
                     foodTimer = null;
                 }
-
-                // Yeni yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
-                food = randomFood();
-                foodTimerStart = Date.now();
-                
-                // Yem engelle çakışıyorsa tekrar oluştur
-                let attempts = 0;
-                while (
-                    obstacles.some(obs => obs.x === food.x && obs.y === food.y) &&
-                    attempts < 50
-                ) {
-                    food = randomFood();
-                    attempts++;
-                }
-                
-                // Yeni elma için timer başlat
                 startFoodTimer();
 
                 const newLevel = 1 + Math.floor(score / 5);
@@ -3495,6 +3568,17 @@
                 return;
             }
 
+            // Ok tuşları için sayfa kaydırmayı engelle (sadece oyun ekranındayken)
+            const arrowKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+            if (arrowKeys.includes(e.key) && currentScreen === "game") {
+                e.preventDefault(); // Sayfa kaydırmayı engelle
+            }
+
+            // Space tuşu için sayfa kaydırmayı engelle (sadece oyun ekranındayken)
+            if (e.key === " " && currentScreen === "game") {
+                e.preventDefault();
+            }
+
             // Hareket kontrolleri
             handleMovement(e.key);
 
@@ -3522,21 +3606,31 @@
         if (gameLayout) {
             gameLayout.addEventListener("touchstart", (e) => {
                 if (currentScreen !== "game" || gameOver || paused) return;
-                // Overlay veya butonlara tıklanıyorsa swipe yapma
+                
+                // Overlay veya butonlara dokunuluyorsa swipe yapma
                 if (e.target.closest("#overlay") || e.target.closest("button") || e.target.closest("input")) {
                     return;
                 }
+                
+                // Sayfa kaydırmayı engelle (oyun ekranındayken)
+                e.preventDefault();
+                
                 const touch = e.touches[0];
                 touchStartX = touch.clientX;
                 touchStartY = touch.clientY;
-            }, { passive: true });
+            }, { passive: false });
 
             gameLayout.addEventListener("touchend", (e) => {
                 if (currentScreen !== "game" || gameOver || paused) return;
-                // Overlay veya butonlara tıklanıyorsa swipe yapma
+                
+                // Overlay veya butonlara dokunuluyorsa swipe yapma
                 if (e.target.closest("#overlay") || e.target.closest("button") || e.target.closest("input")) {
                     return;
                 }
+                
+                // Sayfa kaydırmayı engelle
+                e.preventDefault();
+                
                 const touch = e.changedTouches[0];
                 touchEndX = touch.clientX;
                 touchEndY = touch.clientY;
@@ -3567,7 +3661,7 @@
                         handleDirection("up");
                     }
                 }
-            }, { passive: true });
+            }, { passive: false });
         }
 
 
@@ -3596,7 +3690,7 @@
             if (currentScreen === "game") {
                 draw();
                 
-                if (!gameOver && !paused && snake && food) {
+                if (!gameOver && !paused && snake && foods && foods.length > 0) {
                     const interval = getIntervalByScore(score || 0);
                     if (lastTickTime === 0 || currentTime - lastTickTime >= interval) {
                         tick();
