@@ -1099,14 +1099,15 @@
 
             #game-wrapper {
                 width: 100%;
-                max-width: 400px;
+                max-width: 100%;
             }
 
             canvas {
                 width: 100%;
                 height: auto;
-                max-width: 400px;
-                max-height: 400px;
+                max-width: 100%;
+                max-height: 90vh;
+                aspect-ratio: 1;
             }
         }
 
@@ -1162,7 +1163,7 @@
 
             canvas {
                 max-width: 100%;
-                max-height: 280px;
+                max-height: 400px;
                 width: auto;
                 height: auto;
                 aspect-ratio: 1;
@@ -1195,6 +1196,26 @@
                 display: none; /* Mobilde leaderboard'u gizle, yer tasarrufu için */
             }
 
+            #login-leaderboard {
+                margin-top: 16px !important;
+                padding-top: 16px !important;
+            }
+
+            #login-leaderboard-table {
+                font-size: 11px !important;
+            }
+
+            #login-leaderboard-table th,
+            #login-leaderboard-table td {
+                padding: 4px !important;
+            }
+
+            .auth-card {
+                min-width: 90% !important;
+                max-width: 95% !important;
+                padding: 24px 20px !important;
+            }
+
             .pill {
                 font-size: 10px;
                 padding: 3px 6px;
@@ -1224,7 +1245,8 @@
 
             canvas {
                 max-width: 100%;
-                max-height: 280px;
+                max-height: 320px;
+                aspect-ratio: 1;
             }
 
             #game-wrapper {
@@ -1251,7 +1273,7 @@
 <body>
     <!-- Login Ekranı -->
     <div id="login-screen" class="active">
-        <div class="auth-card">
+        <div class="auth-card" style="max-width: 500px;">
             <div class="auth-title">SNAKE</div>
             <div class="auth-subtitle">Devam etmek için giriş yap</div>
             <form id="login-form">
@@ -1273,6 +1295,25 @@
                     <button type="button" class="auth-button secondary" id="btn-guest">Misafir Olarak Devam Et</button>
                 </div>
             </form>
+            
+            <!-- En Yüksek Skorlar Tablosu -->
+            <div id="login-leaderboard" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(148,163,184,0.2);">
+                <div style="font-size: 14px; font-weight: 600; color: var(--accent-soft); margin-bottom: 12px; text-align: center;">🏆 En Yüksek Skorlar</div>
+                <table id="login-leaderboard-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 6px; color: var(--text-muted); font-weight: 500; width: 30px;">#</th>
+                            <th style="text-align: left; padding: 6px; color: var(--text-muted); font-weight: 500;">Oyuncu</th>
+                            <th style="text-align: right; padding: 6px; color: var(--text-muted); font-weight: 500;">Skor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="login-leaderboard-body">
+                        <tr>
+                            <td colspan="3" style="text-align: center; padding: 12px; color: var(--text-muted);">Yükleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -1543,7 +1584,7 @@
         <div id="game-wrapper">
             <div id="game-card">
                 <div style="position:relative; display:inline-block;">
-                    <canvas id="game" width="400" height="400"></canvas>
+                    <canvas id="game" width="600" height="600"></canvas>
 
                     <!-- Game over / pause overlay -->
                     <div id="overlay">
@@ -1783,6 +1824,7 @@
 
             if (screenName === "login") {
                 document.getElementById("login-screen").classList.add("active");
+                loadLoginLeaderboard();
             } else if (screenName === "signup") {
                 document.getElementById("signup-screen").classList.add("active");
             } else if (screenName === "menu") {
@@ -1873,6 +1915,49 @@
         setupPasswordToggle("login-password-toggle", "login-password");
         setupPasswordToggle("signup-password-toggle", "signup-password");
         setupPasswordToggle("signup-password-confirm-toggle", "signup-password-confirm");
+
+        // ========== KULLANICI ADI SANSÜRLEME ==========
+        function maskUsername(username) {
+            if (!username || username.length <= 2) return username;
+            const halfLength = Math.floor(username.length / 2);
+            const visiblePart = username.substring(0, halfLength);
+            const maskedPart = '*'.repeat(username.length - halfLength);
+            return visiblePart + maskedPart;
+        }
+
+        // ========== LOGIN EKRANI LEADERBOARD ==========
+        async function loadLoginLeaderboard() {
+            const tbody = document.getElementById("login-leaderboard-body");
+            if (!tbody) return;
+            
+            try {
+                const res = await fetch("/api/score/top/?limit=10");
+                if (!res.ok) throw new Error("http");
+                const data = await res.json();
+                const list = data.results || [];
+                
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 12px; color: var(--text-muted);">Henüz skor yok</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = list.map((item, index) => {
+                    const maskedName = maskUsername(item.username);
+                    const rankColor = index < 3 
+                        ? (index === 0 ? '#facc15' : index === 1 ? '#e5e7eb' : '#fb923c')
+                        : 'var(--text-muted)';
+                    return `
+                        <tr style="border-bottom: 1px solid rgba(148,163,184,0.1);">
+                            <td style="padding: 6px; color: ${rankColor}; font-weight: ${index < 3 ? '600' : '400'};">${index + 1}</td>
+                            <td style="padding: 6px; color: var(--text-main);">${maskedName}</td>
+                            <td style="padding: 6px; text-align: right; color: var(--accent-soft); font-weight: 600;">${item.score}</td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 12px; color: var(--danger);">Skorlar yüklenemedi</td></tr>';
+            }
+        }
 
         // ========== API FUNCTIONS ==========
         async function loginUser(username, password) {
@@ -2333,6 +2418,9 @@
         let vx;
         let vy;
         let food;
+        let foodTimer = null; // Elma zamanlayıcısı
+        let foodTimerStart = 0; // Elma oluşturulma zamanı
+        const FOOD_TIMEOUT = 6000; // 6 saniye (milisaniye)
         let score;
         let level;
         let paused = false;
@@ -2423,15 +2511,49 @@
             return position;
         }
         
+        // Elma timer fonksiyonu - 6 saniye sonra yeni konumda doğsun
+        function startFoodTimer() {
+            if (foodTimer) {
+                clearTimeout(foodTimer);
+            }
+            
+            foodTimer = setTimeout(() => {
+                if (gameOver || paused || !food) return;
+                
+                // Eski elmayı kaldır, yeni konumda oluştur
+                let newFood = randomFood();
+                let attempts = 0;
+                
+                // Yeni elma yılan veya engellerle çakışmamalı
+                while (
+                    (snake && snake.some(s => s.x === newFood.x && s.y === newFood.y)) ||
+                    (obstacles && obstacles.some(obs => obs.x === newFood.x && obs.y === newFood.y)) ||
+                    (newFood.x === food.x && newFood.y === food.y) // Aynı yerde olmasın
+                ) {
+                    newFood = randomFood();
+                    attempts++;
+                    if (attempts > 200) break; // Sonsuz döngüyü önle
+                }
+                
+                food = newFood;
+                foodTimerStart = Date.now();
+                
+                // Yeni elma için timer'ı tekrar başlat
+                startFoodTimer();
+            }, FOOD_TIMEOUT);
+        }
+        
         function generateObstacles() {
             obstacles = [];
             if (gameMode !== "random") return;
             
-            // Yılanın başlangıç konumu
+            // Yılanın başlangıç konumu (tileCount'a göre ortada)
+            const startX = Math.floor(tileCount / 2);
+            const startY = Math.floor(tileCount / 2);
             const startPositions = [
-                {x: 10, y: 10},
-                {x: 9, y: 10},
-                {x: 8, y: 10}
+                {x: startX, y: startY},
+                {x: startX - 1, y: startY},
+                {x: startX - 2, y: startY}
             ];
             
             // Toplam engel sayısı (harita boyutuna göre)
@@ -2482,10 +2604,13 @@
         }
 
         function resetGame() {
+            // Yılan başlangıç pozisyonu tileCount'a göre ortada
+            const startX = Math.floor(tileCount / 2);
+            const startY = Math.floor(tileCount / 2);
             snake = [
-                {x: 10, y: 10},
-                {x: 9,  y: 10},
-                {x: 8,  y: 10},
+                {x: startX, y: startY},
+                {x: startX - 1, y: startY},
+                {x: startX - 2, y: startY},
             ];
             vx = 1;
             vy = 0;
@@ -2493,8 +2618,18 @@
             // Oyun moduna göre engelleri oluştur
             generateObstacles();
             
+            // Timer'ı temizle
+            if (foodTimer) {
+                clearTimeout(foodTimer);
+                foodTimer = null;
+            }
+            
             // Yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
             food = randomFood();
+            foodTimerStart = Date.now();
+            
+            // Elma timer'ını başlat
+            startFoodTimer();
             
             score = 0;
             level = 1;
@@ -2523,8 +2658,13 @@
         }
 
         function getIntervalByScore(sc) {
+            // Canvas boyutuna göre hız ayarı (tileCount'a göre)
+            // Daha büyük harita = biraz daha hızlı olabilir (daha fazla alan var)
+            const sizeMultiplier = tileCount / 20; // 20 tile için 1.0, 30 tile için 1.5
+            const baseSpeed = 200 * (1 / sizeMultiplier); // Daha büyük haritada biraz daha hızlı
+            
             // Yavaş başlangıç ve kademeli hızlanma
-            const base = 200; // Başlangıç hızı daha yavaş (200ms)
+            const base = Math.floor(baseSpeed); // Başlangıç hızı
             // Her 8 puanda 5ms azalt (daha yavaş hızlanma)
             const step = Math.floor(sc / 8) * 5;
             // Minimum 80ms'ye kadar düşebilir (daha yavaş maksimum hız)
@@ -3036,8 +3176,16 @@
                 // Elma yeme sesi
                 playSound("eat");
 
+                // Timer'ı sıfırla ve yeni elma oluştur
+                if (foodTimer) {
+                    clearTimeout(foodTimer);
+                    foodTimer = null;
+                }
+
                 // Yeni yem oluştur (engellerle çakışmaması için randomFood zaten kontrol ediyor)
                 food = randomFood();
+                foodTimerStart = Date.now();
+                
                 // Yem engelle çakışıyorsa tekrar oluştur
                 let attempts = 0;
                 while (
@@ -3047,6 +3195,9 @@
                     food = randomFood();
                     attempts++;
                 }
+                
+                // Yeni elma için timer başlat
+                startFoodTimer();
 
                 const newLevel = 1 + Math.floor(score / 5);
                 if (newLevel !== level) {
@@ -3459,6 +3610,7 @@
         // İlk başlatma
         draw();
         loadTopScores();
+        loadLoginLeaderboard();
         requestAnimationFrame(gameLoop);
     </script>
 </body>
